@@ -101,7 +101,7 @@ module SassC
     end
 
     def post_process_css(css)
-      css += "\n" if css.end_with? '}'
+      css += "\n" unless css.empty?
       unless @source_map.nil? || omit_source_map_url?
         url = if source_map_embed?
                 "data:application/json;base64,#{Base64.strict_encode64(@source_map)}"
