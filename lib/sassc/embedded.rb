@@ -159,7 +159,7 @@ module SassC
 
     begin
       begin
-        raise
+        raise RuntimeError
       rescue StandardError
         raise ::Sass::ScriptError
       end
