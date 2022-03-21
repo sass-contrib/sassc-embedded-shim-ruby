@@ -22,7 +22,7 @@ module SassC
         syntax: syntax,
         url: file_url,
 
-        source_map: !source_map_file.nil?,
+        source_map: source_map_embed? || !source_map_file.nil?,
         source_map_include_sources: source_map_contents?,
         style: output_style,
 
@@ -51,6 +51,10 @@ module SassC
     end
 
     private
+
+    def output_path
+      @options[:output_path]
+    end
 
     def file_url
       @file_url ||= Util.path_to_file_url(filename || 'stdin')
@@ -88,6 +92,8 @@ module SassC
       return unless source_map
 
       data = JSON.parse(source_map)
+
+      data['file'] = URI::DEFAULT_PARSER.escape(output_path) if output_path
 
       data['sources'].map! do |source|
         if source.start_with? 'file:'
