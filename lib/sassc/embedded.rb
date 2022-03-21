@@ -46,14 +46,17 @@ module SassC
       line = e.span&.start&.line
       line += 1 unless line.nil?
       path = Util.file_url_to_path(e.span&.url)
-      path = relative_path(Dir.pwd, path)
+      path = relative_path(Dir.pwd, path) unless path.nil?
       raise SyntaxError.new(e.message, filename: path, line: line)
     end
 
     private
 
     def output_path
-      @options[:output_path]
+      @output_path ||= @options.fetch(
+        :output_path,
+        ("#{File.basename(filename, File.extname(filename))}.css" if filename)
+      )
     end
 
     def file_url
@@ -93,11 +96,17 @@ module SassC
 
       data = JSON.parse(source_map)
 
-      data['file'] = URI::DEFAULT_PARSER.escape(output_path) if output_path
+      source_map_dir = File.dirname(source_map_file || '')
+
+      if output_path
+        data['file'] = Util::URI_PARSER.escape(
+          relative_path(source_map_dir, output_path)
+        )
+      end
 
       data['sources'].map! do |source|
         if source.start_with? 'file:'
-          relative_path(Dir.pwd, Util.file_url_to_path(source))
+          relative_path(source_map_dir, Util.file_url_to_path(source))
         else
           source
         end
@@ -112,7 +121,9 @@ module SassC
         url = if source_map_embed?
                 "data:application/json;base64,#{Base64.strict_encode64(@source_map)}"
               else
-                URI::DEFAULT_PARSER.escape(source_map_file)
+                Util::URI_PARSER.escape(
+                  relative_path(File.dirname(output_path || ''), source_map_file)
+                )
               end
         css += "\n/*# sourceMappingURL=#{url} */"
       end
@@ -120,7 +131,7 @@ module SassC
     end
 
     def relative_path(from, to)
-      Pathname.new(to).relative_path_from(Pathname.new(from)).to_s
+      Pathname.new(File.absolute_path(to)).relative_path_from(Pathname.new(File.absolute_path(from))).to_s
     end
   end
 
@@ -389,10 +400,12 @@ module SassC
   module Util
     module_function
 
+    URI_PARSER = URI::Parser.new({ RESERVED: ';/?:@&=+$,' })
+
     def file_url_to_path(url)
       return if url.nil?
 
-      path = URI::DEFAULT_PARSER.unescape(URI.parse(url).path)
+      path = URI_PARSER.unescape(URI.parse(url).path)
       path = path[1..] if Gem.win_platform? && path[0].chr == '/' && path[1].chr =~ /[a-z]/i && path[2].chr == ':'
       path
     end
@@ -402,7 +415,7 @@ module SassC
 
       path = File.absolute_path(path)
       path = "/#{path}" unless path.start_with? '/'
-      URI::File.build([nil, URI::DEFAULT_PARSER.escape(path)]).to_s
+      URI::File.build([nil, URI_PARSER.escape(path)]).to_s
     end
   end
 end
