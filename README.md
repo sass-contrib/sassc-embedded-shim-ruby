@@ -16,10 +16,10 @@ gem install sassc-embedded
 
 ## Usage
 
-To compile, `require 'sassc/embedded'` before use a `SassC::Engine`, e.g.:
+To compile, `require 'sassc-embedded'` before use a `SassC::Engine`, e.g.:
 
 ``` ruby
-require 'sassc/embedded'
+require 'sassc-embedded'
 
 SassC::Engine.new(sass, style: :compressed).render
 ```
