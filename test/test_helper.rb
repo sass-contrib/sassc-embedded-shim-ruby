@@ -1,11 +1,11 @@
 # frozen_string_literal: true
 
+require 'sassc-embedded'
+
 require 'fileutils'
 require 'minitest/autorun'
 require 'minitest/pride'
 require 'minitest/around/unit'
-
-require 'sassc/embedded'
 
 module FixtureHelper
   FIXTURE_ROOT = File.expand_path(File.join(File.dirname(__FILE__), 'fixtures'))
