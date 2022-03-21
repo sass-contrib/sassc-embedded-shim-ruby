@@ -19,7 +19,7 @@ gem install sassc-embedded
 This polyfill utilizes `sass-embedded` to allow you to compile SCSS or SASS syntax to CSS. To compile, use a `SassC::Engine`, e.g.:
 
 ``` ruby
-require 'sassc-embedded'
+require 'sassc/embedded'
 
 SassC::Engine.new(sass, style: :compressed).render
 ```
