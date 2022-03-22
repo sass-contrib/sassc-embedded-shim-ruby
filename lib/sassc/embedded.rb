@@ -101,7 +101,7 @@ module SassC
       data['file'] = Util::URI_PARSER.escape(relative_path(source_map_dir, output_path)) if output_path
 
       data['sources'].map! do |source|
-        if source.start_with? 'file:'
+        if source.start_with?('file:')
           relative_path(source_map_dir, Util.file_url_to_path(source))
         else
           source
@@ -214,7 +214,11 @@ module SassC
       end
 
       def canonicalize(url, **)
-        path = Util.file_url_to_path(url)
+        path = if url.start_with?('file:')
+                 Util.file_url_to_path(url)
+               else
+                 Util::URI_PARSER.unescape(url)
+               end
         canonical_url = Util.path_to_file_url(File.absolute_path(path))
 
         if @importer_results.key?(canonical_url)
