@@ -13,7 +13,7 @@ This library polyfills [`sassc`](https://github.com/sass/sassc-ruby) with the [`
 Add these lines to your application's Gemfile:
 
 ``` ruby
-gem 'sassc', github: 'sass/sassc-ruby', ref: "refs/pull/233/head"
+gem 'sassc', github: 'sass/sassc-ruby', ref: 'refs/pull/233/head'
 gem 'sassc-embedded'
 ```
 
