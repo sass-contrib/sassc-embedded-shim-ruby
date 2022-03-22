@@ -38,14 +38,14 @@ module SassC
 
       @dependencies = result.loaded_urls
                             .filter { |url| url.start_with?('file:') && url != file_url }
-                            .map { |url| Util.file_url_to_path(url) }
+                            .map { |url| URL.file_url_to_path(url) }
       @source_map = post_process_source_map(result.source_map)
 
       return post_process_css(result.css) unless quiet?
     rescue ::Sass::CompileError => e
       line = e.span&.start&.line
       line += 1 unless line.nil?
-      path = Util.file_url_to_path(e.span&.url)
+      path = URL.file_url_to_path(e.span&.url)
       path = relative_path(Dir.pwd, path) unless path.nil?
       raise SyntaxError.new(e.message, filename: path, line: line)
     end
@@ -60,7 +60,7 @@ module SassC
     end
 
     def file_url
-      @file_url ||= Util.path_to_file_url(filename || 'stdin')
+      @file_url ||= URL.path_to_file_url(filename || 'stdin')
     end
 
     def syntax
@@ -98,11 +98,11 @@ module SassC
 
       source_map_dir = File.dirname(source_map_file || '')
 
-      data['file'] = Util::URI_PARSER.escape(relative_path(source_map_dir, output_path)) if output_path
+      data['file'] = URL.escape(relative_path(source_map_dir, output_path)) if output_path
 
       data['sources'].map! do |source|
         if source.start_with?('file:')
-          relative_path(source_map_dir, Util.file_url_to_path(source))
+          relative_path(source_map_dir, URL.file_url_to_path(source))
         else
           source
         end
@@ -117,7 +117,7 @@ module SassC
         url = if source_map_embed?
                 "data:application/json;base64,#{Base64.strict_encode64(@source_map)}"
               else
-                Util::URI_PARSER.escape(relative_path(File.dirname(output_path || ''), source_map_file))
+                URL.escape(relative_path(File.dirname(output_path || ''), source_map_file))
               end
         css += "\n/*# sourceMappingURL=#{url} */"
       end
@@ -215,11 +215,11 @@ module SassC
 
       def canonicalize(url, **)
         path = if url.start_with?('file:')
-                 Util.file_url_to_path(url)
+                 URL.file_url_to_path(url)
                else
-                 Util::URI_PARSER.unescape(url)
+                 URL.unescape(url)
                end
-        canonical_url = Util.path_to_file_url(File.absolute_path(path))
+        canonical_url = URL.path_to_file_url(File.absolute_path(path))
 
         if @importer_results.key?(canonical_url)
           return if @importer_results[canonical_url].nil?
@@ -238,7 +238,7 @@ module SassC
 
         dirname = File.dirname(@importer.options.fetch(:filename, 'stdin'))
         contents = imports.map do |import|
-          import_url = Util.path_to_file_url(File.absolute_path(import.path, dirname))
+          import_url = URL.path_to_file_url(File.absolute_path(import.path, dirname))
           @importer_results[import_url] = if import.source
                                             {
                                               contents: import.source,
@@ -251,7 +251,7 @@ module SassC
                                                         :scss
                                                       end,
                                               source_map_url: if import.source_map_path
-                                                                Util.path_to_file_url(
+                                                                URL.path_to_file_url(
                                                                   File.absolute_path(
                                                                     import.source_map_path, dirname
                                                                   )
@@ -395,15 +395,25 @@ module SassC
     end
   end
 
-  module Util
+  module URL
+    PARSER = URI::Parser.new({ RESERVED: ';/?:@&=+$,' })
+
+    private_constant :PARSER
+
     module_function
 
-    URI_PARSER = URI::Parser.new({ RESERVED: ';/?:@&=+$,' })
+    def escape(str)
+      PARSER.escape(str)
+    end
+
+    def unescape(str)
+      PARSER.unescape(str)
+    end
 
     def file_url_to_path(url)
       return if url.nil?
 
-      path = URI_PARSER.unescape(URI.parse(url).path)
+      path = unescape(URI.parse(url).path)
       path = path[1..] if Gem.win_platform? && path[0].chr == '/' && path[1].chr =~ /[a-z]/i && path[2].chr == ':'
       path
     end
@@ -413,7 +423,7 @@ module SassC
 
       path = File.absolute_path(path)
       path = "/#{path}" unless path.start_with? '/'
-      URI::File.build([nil, URI_PARSER.escape(path)]).to_s
+      URI::File.build([nil, escape(path)]).to_s
     end
   end
 end
