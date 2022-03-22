@@ -165,7 +165,7 @@ module SassC
     def arguments_from_native_list(native_argument_list)
       native_argument_list.map do |embedded_value|
         Script::ValueConversion.from_native embedded_value, @options
-      end
+      end.compact
     end
 
     begin
