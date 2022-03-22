@@ -225,17 +225,16 @@ module SassC
 
         canonical_url = "sassc-embedded:#{canonical_url}"
 
-        filename = @importer.options[:filename]
-
-        imports = @importer.imports path, filename
+        imports = @importer.imports path, @importer.options[:filename]
         unless imports.is_a? Array
           return if imports.path == path
 
           imports = [imports]
         end
 
+        dirname = File.dirname(@importer.options.fetch(:filename, 'stdin'))
         contents = imports.map do |import|
-          import_url = Util.path_to_file_url(File.absolute_path(import.path, filename || ''))
+          import_url = Util.path_to_file_url(File.absolute_path(import.path, dirname))
           @importer_results[import_url] = if import.source
                                             {
                                               contents: import.source,
@@ -250,7 +249,7 @@ module SassC
                                               source_map_url: if import.source_map_path
                                                                 Util.path_to_file_url(
                                                                   File.absolute_path(
-                                                                    import.source_map_path, filename || ''
+                                                                    import.source_map_path, dirname
                                                                   )
                                                                 )
                                                               end
