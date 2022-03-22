@@ -170,7 +170,7 @@ module SassC
 
     def arguments_from_native_list(native_argument_list)
       native_argument_list.map do |embedded_value|
-        Script::ValueConversion.from_native embedded_value
+        Script::ValueConversion.from_native embedded_value, @options
       end
     end
 
@@ -239,20 +239,17 @@ module SassC
         end
 
         contents = imports.map do |import|
-          import_path = File.absolute_path(import.path)
-          import_url = Util.path_to_file_url(import_path)
+          import_url = Util.path_to_file_url(File.absolute_path(import.path))
           @importer_results[import_url] = if import.source
                                             {
                                               contents: import.source,
                                               syntax: case import.path
-                                                      when /\.scss$/i
-                                                        :scss
                                                       when /\.sass$/i
                                                         :indented
                                                       when /\.css$/i
                                                         :css
                                                       else
-                                                        raise ArgumentError
+                                                        :scss
                                                       end,
                                               source_map_url: if import.source_map_path
                                                                 Util.path_to_file_url(
@@ -304,7 +301,7 @@ module SassC
               alpha: value.alpha
             )
           else
-            raise ArgumentError
+            raise UnsupportedValue, "Sass color mode #{value.instance_eval { @mode }} unsupported"
           end
         when ::SassC::Script::Value::List
           ::Sass::Value::List.new(
@@ -315,7 +312,7 @@ module SassC
                        when :space
                          ' '
                        else
-                         raise ArgumentError
+                         raise UnsupportedValue, "Sass list separator #{value.separator} unsupported"
                        end,
             bracketed: value.bracketed
           )
@@ -336,11 +333,11 @@ module SassC
             quoted: value.type != :identifier
           )
         else
-          raise ArgumentError
+          raise UnsupportedValue, "Sass return type #{value.class.name.split('::').last} unsupported"
         end
       end
 
-      def self.from_native(value)
+      def self.from_native(value, _options = nil)
         case value
         when ::Sass::Value::Null::NULL
           nil
@@ -371,7 +368,7 @@ module SassC
                        when ' '
                          :space
                        else
-                         raise ArgumentError
+                         raise UnsupportedValue, "Sass list separator #{value.separator} unsupported"
                        end,
             bracketed: value.bracketed?
           )
@@ -391,7 +388,7 @@ module SassC
             value.quoted? ? :string : :identifier
           )
         else
-          raise ArgumentError
+          raise UnsupportedValue, "Sass argument of type #{value.class.name.split('::').last} unsupported"
         end
       end
     end
