@@ -98,11 +98,7 @@ module SassC
 
       source_map_dir = File.dirname(source_map_file || '')
 
-      if output_path
-        data['file'] = Util::URI_PARSER.escape(
-          relative_path(source_map_dir, output_path)
-        )
-      end
+      data['file'] = Util::URI_PARSER.escape(relative_path(source_map_dir, output_path)) if output_path
 
       data['sources'].map! do |source|
         if source.start_with? 'file:'
@@ -112,7 +108,7 @@ module SassC
         end
       end
 
-      -JSON.generate(data)
+      JSON.generate(data)
     end
 
     def post_process_css(css)
@@ -121,13 +117,11 @@ module SassC
         url = if source_map_embed?
                 "data:application/json;base64,#{Base64.strict_encode64(@source_map)}"
               else
-                Util::URI_PARSER.escape(
-                  relative_path(File.dirname(output_path || ''), source_map_file)
-                )
+                Util::URI_PARSER.escape(relative_path(File.dirname(output_path || ''), source_map_file))
               end
         css += "\n/*# sourceMappingURL=#{url} */"
       end
-      -css
+      css
     end
 
     def relative_path(from, to)
@@ -229,7 +223,7 @@ module SassC
           return canonical_url
         end
 
-        canonical_url = "sass-importer-shim:#{canonical_url}"
+        canonical_url = "sassc-embedded:#{canonical_url}"
 
         imports = @importer.imports path, @importer.options[:filename]
         unless imports.is_a? Array
