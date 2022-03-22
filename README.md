@@ -10,6 +10,21 @@ This library polyfills [`sassc`](https://github.com/sass/sassc-ruby) with the [`
 
 ## Install
 
+Add these lines to your application's Gemfile:
+
+``` ruby
+gem 'sassc', github: 'sass/sassc-ruby', ref: "refs/pull/233/head"
+gem 'sassc-embedded'
+```
+
+And then execute:
+
+``` sh
+bundle
+```
+
+Or install it yourself as:
+
 ``` sh
 gem install sassc-embedded
 ```
