@@ -29,8 +29,13 @@ See [rubydoc.info/gems/sassc](https://rubydoc.info/gems/sassc) for full API docu
 ## Behavioral Differences from SassC Ruby
 
 1. Option `:style => :nested` behaves as `:expanded`.
+
 2. Option `:style => :compact` behaves as `:compressed`.
+
 3. Option `:precision` is ignored.
+
 4. Option `:line_comments` is ignored.
+
 5. In `Importer#imports(path, parent_path)`, argument `path` is set to absolute path, and argument `parent_path` is set to value of option `:filename`.
-6. See [the dart-sass documentation](https://github.com/sass/dart-sass#behavioral-differences-from-ruby-sass) for other differences.
+
+See [the dart-sass documentation](https://github.com/sass/dart-sass#behavioral-differences-from-ruby-sass) for other differences.
