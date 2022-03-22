@@ -39,7 +39,7 @@ module SassC
       @dependencies = result.loaded_urls
                             .filter { |url| url.start_with?('file:') && url != file_url }
                             .map { |url| Util.file_url_to_path(url) }
-      @source_map   = post_process_source_map(result.source_map)
+      @source_map = post_process_source_map(result.source_map)
 
       return post_process_css(result.css) unless quiet?
     rescue ::Sass::CompileError => e
@@ -225,7 +225,9 @@ module SassC
 
         canonical_url = "sassc-embedded:#{canonical_url}"
 
-        imports = @importer.imports path, @importer.options[:filename]
+        filename = @importer.options[:filename]
+
+        imports = @importer.imports path, filename
         unless imports.is_a? Array
           return if imports.path == path
 
@@ -233,7 +235,7 @@ module SassC
         end
 
         contents = imports.map do |import|
-          import_url = Util.path_to_file_url(File.absolute_path(import.path))
+          import_url = Util.path_to_file_url(File.absolute_path(import.path, filename || ''))
           @importer_results[import_url] = if import.source
                                             {
                                               contents: import.source,
@@ -247,7 +249,9 @@ module SassC
                                                       end,
                                               source_map_url: if import.source_map_path
                                                                 Util.path_to_file_url(
-                                                                  File.absolute_path(import.source_map_path, path)
+                                                                  File.absolute_path(
+                                                                    import.source_map_path, filename || ''
+                                                                  )
                                                                 )
                                                               end
                                             }
