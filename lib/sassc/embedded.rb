@@ -163,8 +163,8 @@ module SassC
     private
 
     def arguments_from_native_list(native_argument_list)
-      native_argument_list.map do |embedded_value|
-        Script::ValueConversion.from_native embedded_value, @options
+      native_argument_list.map do |native_value|
+        Script::ValueConversion.from_native(native_value, @options)
       end.compact
     end
 
@@ -175,7 +175,7 @@ module SassC
         raise ::Sass::ScriptError
       end
     rescue StandardError => e
-      unless e.full_message.include? e.cause.full_message
+      unless e.full_message.include?(e.cause.full_message)
         ::Sass::ScriptError.class_eval do
           def full_message(*args, **kwargs)
             full_message = super(*args, **kwargs)
@@ -200,7 +200,7 @@ module SassC
     end
 
     class FileImporter
-      def find_file_url(url, **_kwargs)
+      def find_file_url(url, **)
         return url if url.start_with?('file:')
       end
     end
@@ -229,8 +229,8 @@ module SassC
 
         canonical_url = "sassc-embedded:#{canonical_url}"
 
-        imports = @importer.imports path, @importer.options[:filename]
-        unless imports.is_a? Array
+        imports = @importer.imports(path, @importer.options[:filename])
+        unless imports.is_a?(Array)
           return if imports.path == path
 
           imports = [imports]
@@ -422,7 +422,7 @@ module SassC
       return if path.nil?
 
       path = File.absolute_path(path)
-      path = "/#{path}" unless path.start_with? '/'
+      path = "/#{path}" unless path.start_with?('/')
       URI::File.build([nil, escape(path)]).to_s
     end
   end
