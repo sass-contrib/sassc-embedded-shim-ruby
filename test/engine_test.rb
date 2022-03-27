@@ -214,6 +214,7 @@ module SassC
       ENV['SASS_PATH'] = expected_load_paths.join(File::PATH_SEPARATOR)
       assert_equal expected_load_paths, ::SassC.load_paths
       ::SassC.load_paths.clear
+      ENV['SASS_PATH'] = nil
     end
 
     def test_load_paths_not_configured
