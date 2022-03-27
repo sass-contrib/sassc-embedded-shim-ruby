@@ -195,7 +195,7 @@ module SassC
       if @importer
         [FileImporter.new, Importer.new(@importer)]
       else
-        [FileImporter.new]
+        []
       end
     end
 
