@@ -426,4 +426,6 @@ module SassC
       URI::File.build([nil, escape(path)]).to_s
     end
   end
+
+  private_constant :URL
 end
