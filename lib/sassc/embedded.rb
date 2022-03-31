@@ -17,8 +17,8 @@ module SassC
 
       result = ::Sass.compile_string(
         @template,
-        importer: nil,
-        load_paths: load_paths,
+        importer: import_handler.setup(nil),
+        load_paths: @options[:importer].nil? ? load_paths : [],
         syntax: syntax,
         url: file_url,
 
@@ -26,8 +26,8 @@ module SassC
         source_map_include_sources: source_map_contents?,
         style: output_style,
 
-        functions: FunctionsHandler.new(@options).setup(nil, functions: @functions),
-        importers: ImportHandler.new(@options).setup(nil),
+        functions: functions_handler.setup(nil, functions: @functions),
+        importers: [],
 
         alert_ascii: @options.fetch(:alert_ascii, false),
         alert_color: @options.fetch(:alert_color, nil),
@@ -45,7 +45,8 @@ module SassC
     rescue ::Sass::CompileError => e
       line = e.span&.start&.line
       line += 1 unless line.nil?
-      path = URL.file_url_to_path(e.span&.url)
+      url = e.span&.url
+      path = url&.start_with?('file:') ? URL.file_url_to_path(url) : nil
       path = relative_path(Dir.pwd, path) unless path.nil?
       raise SyntaxError.new(e.message, filename: path, line: line)
     end
@@ -60,7 +61,7 @@ module SassC
     end
 
     def file_url
-      @file_url ||= URL.path_to_file_url(filename || 'stdin')
+      @file_url ||= filename.nil? ? nil : URL.path_to_file_url(File.absolute_path(filename))
     end
 
     def syntax
@@ -192,86 +193,208 @@ module SassC
 
   class ImportHandler
     def setup(_native_options)
-      if @importer
-        [FileImporter.new, Importer.new(@importer)]
-      else
-        []
-      end
+      Importer.new(@importer) if @importer
     end
 
-    class FileImporter
-      def find_file_url(url, **)
-        return url if url.start_with?('file:')
+    module FileImporter
+      module_function
+
+      def find_file_url(url, from_import:)
+        resolved = FileImporter.resolve_path(URL.unescape(url), from_import)
+        URL.path_to_file_url(File.absolute_path(resolved)) unless resolved.nil?
+      end
+
+      class << self
+        def resolve_path(path, from_import)
+          ext = File.extname(path)
+          if ['.sass', '.scss', '.css'].include?(ext)
+            if from_import
+              result = exactly_one(try_path("#{without_ext(path)}.import#{ext}"))
+              return result unless result.nil?
+            end
+            return exactly_one(try_path(path))
+          end
+
+          if from_import
+            result = exactly_one(try_path_with_ext("#{path}.import"))
+            return result unless result.nil?
+          end
+
+          result = exactly_one(try_path_with_ext(path))
+          return result unless result.nil?
+
+          try_path_as_dir(path, from_import)
+        end
+
+        private
+
+        def try_path_with_ext(path)
+          result = try_path("#{path}.sass") + try_path("#{path}.scss")
+          result.empty? ? try_path("#{path}.css") : result
+        end
+
+        def try_path(path)
+          partial = File.join(File.dirname(path), "_#{File.basename(path)}")
+          result = []
+          result.push(partial) if file_exist?(partial)
+          result.push(path) if file_exist?(path)
+          result
+        end
+
+        def try_path_as_dir(path, from_import)
+          return unless dir_exist? path
+
+          if from_import
+            result = exactly_one(try_path_with_ext(File.join(path, 'index.import')))
+            return result unless result.nil?
+          end
+
+          exactly_one(try_path_with_ext(File.join(path, 'index')))
+        end
+
+        def exactly_one(paths)
+          return if paths.empty?
+          return paths.first if paths.length == 1
+
+          raise "It's not clear which file to import. Found:\n#{paths.map { |path| "  #{path}" }.join("\n")}"
+        end
+
+        def file_exist?(path)
+          File.exist?(path) && File.file?(path)
+        end
+
+        def dir_exist?(path)
+          File.exist?(path) && File.directory?(path)
+        end
+
+        def without_ext(path)
+          ext = File.extname(path)
+          path.delete_suffix(ext)
+        end
       end
     end
 
     private_constant :FileImporter
 
     class Importer
+      module Protocol
+        FILE = 'file:'
+        IMPORT = 'sassc-embedded-import:'
+        LOAD = 'sassc-embedded-load:'
+        LOADED = 'sassc-embedded-loaded:'
+      end
+
+      private_constant :Protocol
+
       def initialize(importer)
         @importer = importer
         @importer_results = {}
+        @parent_urls = [URL.parse(URL.path_to_file_url(File.absolute_path(@importer.options[:filename] || 'stdin')))]
       end
 
-      def canonicalize(url, **)
-        path = if url.start_with?('file:')
-                 URL.file_url_to_path(url)
+      def canonicalize(url, from_import:)
+        return url if url.start_with?(Protocol::IMPORT, Protocol::LOADED)
+
+        if url.start_with?(Protocol::LOAD)
+          url = url.delete_prefix(Protocol::LOAD)
+          return url if @importer_results.key?(url)
+
+          path = URL.parse(url).route_from(@parent_urls.last).to_s
+          resolved = resolve_path(path, URL.file_url_to_path(@parent_urls.last.to_s), from_import)
+          return resolved.nil? ? nil : URL.path_to_file_url(resolved)
+        end
+
+        path = if url.start_with?(Protocol::FILE)
+                 URL.parse(url).route_from(@parent_urls.last).to_s
                else
                  URL.unescape(url)
                end
-        canonical_url = URL.path_to_file_url(File.absolute_path(path))
+        parent_path = if @parent_urls.first == @parent_urls.last
+                        @importer.options[:filename] || 'stdin'
+                      else
+                        @parent_urls.last.route_from(@parent_urls.first).to_s
+                      end
 
-        if @importer_results.key?(canonical_url)
-          return if @importer_results[canonical_url].nil?
-
-          return canonical_url
+        imports = @importer.imports(path, parent_path)
+        imports = [SassC::Importer::Import.new(path)] if imports.nil?
+        imports = [imports] unless imports.is_a?(Array)
+        imports.each do |import|
+          import.path = File.absolute_path(import.path, File.dirname(parent_path))
         end
 
-        canonical_url = "sassc-embedded:#{canonical_url}"
-
-        imports = @importer.imports(path, @importer.options[:filename])
-        unless imports.is_a?(Array)
-          return if imports.path == path
-
-          imports = [imports]
-        end
-
-        dirname = File.dirname(@importer.options.fetch(:filename, 'stdin'))
-        contents = imports.map do |import|
-          import_url = URL.path_to_file_url(File.absolute_path(import.path, dirname))
-          @importer_results[import_url] = if import.source
-                                            {
-                                              contents: import.source,
-                                              syntax: case import.path
-                                                      when /\.sass$/i
-                                                        :indented
-                                                      when /\.css$/i
-                                                        :css
-                                                      else
-                                                        :scss
-                                                      end,
-                                              source_map_url: if import.source_map_path
-                                                                URL.path_to_file_url(
-                                                                  File.absolute_path(
-                                                                    import.source_map_path, dirname
-                                                                  )
-                                                                )
-                                                              end
-                                            }
-                                          end
-          "@import #{import_url.inspect};"
-        end.join("\n")
-
-        @importer_results[canonical_url] = {
-          contents: contents,
-          syntax: :scss
-        }
-
+        import_url = URL.path_to_file_url(File.absolute_path(path, File.dirname(parent_path)))
+        canonical_url = "#{Protocol::IMPORT}#{import_url}"
+        @importer_results[canonical_url] = imports_to_native(imports)
         canonical_url
       end
 
       def load(canonical_url)
-        @importer_results[canonical_url]
+        if canonical_url.start_with?(Protocol::IMPORT)
+          @importer_results.delete(canonical_url)
+        elsif canonical_url.start_with?(Protocol::FILE)
+          @parent_urls.push(URL.parse(canonical_url))
+          if @importer_results.key?(canonical_url)
+            @importer_results.delete(canonical_url)
+          else
+            path = URL.file_url_to_path(canonical_url)
+            {
+              contents: File.read(path),
+              syntax: syntax(path),
+              source_map_url: canonical_url
+            }
+          end
+        elsif canonical_url.start_with?(Protocol::LOADED)
+          @parent_urls.pop
+          {
+            contents: '',
+            syntax: 'scss'
+          }
+        end
+      end
+
+      private
+
+      def load_paths
+        @load_paths ||= (@importer.options[:load_paths] || []) + SassC.load_paths
+      end
+
+      def resolve_path(path, parent_path, from_import)
+        [File.dirname(parent_path)].concat(load_paths).each do |load_path|
+          resolved = FileImporter.resolve_path(File.absolute_path(path, load_path), from_import)
+          return resolved unless resolved.nil?
+        end
+        nil
+      end
+
+      def syntax(path)
+        case File.extname(path)
+        when '.sass'
+          :indented
+        when '.css'
+          :css
+        else
+          :scss
+        end
+      end
+
+      def imports_to_native(imports)
+        {
+          contents: imports.flat_map do |import|
+            file_url = URL.path_to_file_url(import.path)
+            if import.source
+              @importer_results[file_url] = {
+                contents: import.source,
+                syntax: syntax(import.path),
+                source_map_url: file_url
+              }
+            end
+            [
+              "@import #{"#{Protocol::LOAD}#{file_url}".inspect};",
+              "@import #{"#{Protocol::LOADED}#{file_url}".inspect};"
+            ]
+          end.join("\n"),
+          syntax: :scss
+        }
       end
     end
 
@@ -402,6 +525,10 @@ module SassC
 
     module_function
 
+    def parse(str)
+      PARSER.parse(str)
+    end
+
     def escape(str)
       PARSER.escape(str)
     end
@@ -413,7 +540,7 @@ module SassC
     def file_url_to_path(url)
       return if url.nil?
 
-      path = unescape(URI.parse(url).path)
+      path = unescape(parse(url).path)
       path = path[1..] if Gem.win_platform? && path[0].chr == '/' && path[1].chr =~ /[a-z]/i && path[2].chr == ':'
       path
     end
@@ -421,7 +548,6 @@ module SassC
     def path_to_file_url(path)
       return if path.nil?
 
-      path = File.absolute_path(path)
       path = "/#{path}" unless path.start_with?('/')
       URI::File.build([nil, escape(path)]).to_s
     end

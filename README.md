@@ -51,6 +51,4 @@ See [rubydoc.info/gems/sassc](https://rubydoc.info/gems/sassc) for full API docu
 
 4. Option `:line_comments` is ignored.
 
-5. Argument `parent_path` in `Importer#imports(path, parent_path)` is set to value of option `:filename`.
-
 See [the dart-sass documentation](https://github.com/sass/dart-sass#behavioral-differences-from-ruby-sass) for other differences.
