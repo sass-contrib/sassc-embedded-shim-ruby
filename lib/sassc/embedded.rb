@@ -286,8 +286,7 @@ module SassC
       def initialize(importer)
         @importer = importer
         @importer_results = {}
-        @base_url = URL.parse(URL.path_to_file_url("#{File.absolute_path('')}/"))
-        @parent_urls = [URL.parse(URL.path_to_file_url(File.absolute_path(@importer.options[:filename] || 'stdin')))]
+        @parent_urls = [URL.path_to_file_url(File.absolute_path(@importer.options[:filename] || 'stdin'))]
       end
 
       def canonicalize(url, from_import:)
@@ -305,7 +304,7 @@ module SassC
         return unless url.start_with?(Protocol::FILE)
 
         path = URL.parse(url).route_from(@parent_urls.last).to_s
-        parent_path = URL.file_url_to_path(@parent_urls.last.to_s)
+        parent_path = URL.file_url_to_path(@parent_urls.last)
 
         imports = @importer.imports(path, parent_path)
         imports = [SassC::Importer::Import.new(path)] if imports.nil?
@@ -324,7 +323,7 @@ module SassC
         if canonical_url.start_with?(Protocol::IMPORT)
           @importer_results.delete(canonical_url)
         elsif canonical_url.start_with?(Protocol::FILE)
-          @parent_urls.push(URL.parse(canonical_url))
+          @parent_urls.push(canonical_url)
           if @importer_results.key?(canonical_url)
             @importer_results.delete(canonical_url)
           else
