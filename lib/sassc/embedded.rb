@@ -374,11 +374,19 @@ module SassC
           contents: imports.flat_map do |import|
             file_url = URL.path_to_file_url(import.path)
             if import.source
-              @importer_results[file_url] = {
-                contents: import.source,
-                syntax: syntax(import.path),
-                source_map_url: file_url
-              }
+              @importer_results[file_url] = if import.source.is_a?(Hash)
+                                              {
+                                                contents: import.source[:contents],
+                                                syntax: import.source[:syntax],
+                                                source_map_url: file_url
+                                              }
+                                            else
+                                              {
+                                                contents: import.source,
+                                                syntax: syntax(import.path),
+                                                source_map_url: file_url
+                                              }
+                                            end
             end
             [
               "@import #{"#{Protocol::LOAD}#{file_url}".inspect};",
@@ -391,6 +399,15 @@ module SassC
     end
 
     private_constant :Importer
+  end
+
+  class Sass2Scss
+    def self.convert(sass)
+      {
+        contents: sass,
+        syntax: :indented
+      }
+    end
   end
 
   module Script
