@@ -193,13 +193,19 @@ module SassC
 
   class ImportHandler
     def setup(_native_options)
-      Importer.new(@importer) if @importer
+      if @importer
+        Importer.new(@importer)
+      else
+        FileImporter
+      end
     end
 
     module FileImporter
       module_function
 
       def find_file_url(url, from_import:)
+        return if url.start_with?('file:')
+
         resolved = FileImporter.resolve_path(URL.unescape(url), from_import)
         URL.path_to_file_url(File.absolute_path(resolved)) unless resolved.nil?
       end
