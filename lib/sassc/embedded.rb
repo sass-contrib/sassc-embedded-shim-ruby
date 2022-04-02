@@ -61,7 +61,7 @@ module SassC
     end
 
     def file_url
-      @file_url ||= filename.nil? ? nil : URL.path_to_file_url(File.absolute_path(filename))
+      @file_url ||= URL.path_to_file_url(File.absolute_path(filename || 'stdin'))
     end
 
     def syntax
@@ -193,11 +193,7 @@ module SassC
 
   class ImportHandler
     def setup(_native_options)
-      if @importer
-        Importer.new(@importer)
-      else
-        FileImporter
-      end
+      Importer.new(@importer) if @importer
     end
 
     module FileImporter
@@ -310,11 +306,9 @@ module SassC
           return resolved.nil? ? nil : URL.path_to_file_url(resolved)
         end
 
-        path = if url.start_with?(Protocol::FILE)
-                 URL.parse(url).route_from(@parent_urls.last).to_s
-               else
-                 URL.unescape(url)
-               end
+        return unless url.start_with?(Protocol::FILE)
+
+        path = URL.parse(url).route_from(@parent_urls.last).to_s
         parent_path = if @parent_urls.first == @parent_urls.last
                         @importer.options[:filename] || 'stdin'
                       else
