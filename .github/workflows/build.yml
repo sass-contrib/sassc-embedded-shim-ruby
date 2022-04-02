@@ -45,32 +45,14 @@ jobs:
     - name: Test
       run: bundle exec rake test
 
-  install:
-
-    runs-on: ${{ matrix.os }}
-
-    strategy:
-      matrix:
-        os: [macos-latest, ubuntu-latest, windows-latest]
-        ruby-version: ['2.6', '2.7', '3.0', 'ruby', 'jruby']
-
-    steps:
-    - name: Checkout
-      uses: actions/checkout@v3
-
-    - name: Set up Ruby
-      uses: ruby/setup-ruby@v1
-      with:
-        ruby-version: ${{ matrix.ruby-version }}
-
-    - name: Install
-      run: rake -f -r bundler/gem_tasks install
+    - name: Test Rails
+      run: bundle exec rake rails:test
 
   release:
 
     if: github.event.repository.fork == false && github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
 
-    needs: [lint, test, install]
+    needs: [lint, test]
 
     runs-on: ubuntu-latest
 
