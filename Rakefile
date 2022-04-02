@@ -12,25 +12,25 @@ task :test do
 end
 
 namespace :rails do
-  options = { chdir: 'vendor/github.com/sass/sassc-rails' }
+  submodule = 'vendor/github.com/sass/sassc-rails'
 
-  desc 'Init sassc-rails submodule'
+  desc "Init submodule #{submodule}"
   task :init do
-    sh(*%w[git submodule update --init vendor/github.com/sass/sassc-rails])
+    sh(*%w[git submodule update --init], submodule)
   end
 
-  desc 'Clean sassc-rails submodule'
+  desc "Clean submodule #{submodule}"
   task clean: :init do
-    sh(*%w[git reset --hard], **options)
-    sh(*%w[git clean -dffx], **options)
+    sh(*%w[git reset --hard], chdir: submodule)
+    sh(*%w[git clean -dffx], chdir: submodule)
   end
 
-  desc 'Patch sassc-rails submodule'
+  desc "Patch submodule #{submodule}"
   task patch: :clean do
-    sh(*%w[git apply ../../../../test/patches/sassc-rails.diff], **options)
+    sh(*%w[git apply], File.absolute_path('test/patches/sassc-rails.diff', __dir__), chdir: submodule)
   end
 
-  desc 'Test sassc-rails submodule'
+  desc "Test submodule #{submodule}"
   task test: :patch do
     Bundler.with_original_env do
       %w[
@@ -40,8 +40,8 @@ namespace :rails do
         gemfiles/sprockets-rails_3_0.gemfile
       ].each do |gemfile|
         env = { 'BUNDLE_GEMFILE' => gemfile }
-        sh(env, *%w[bundle install], **options)
-        sh(env, *%w[bundle exec rake test], **options)
+        sh(env, *%w[bundle install], chdir: submodule)
+        sh(env, *%w[bundle exec rake test], chdir: submodule)
       end
     end
     Rake::Task['rails:clean'].execute
