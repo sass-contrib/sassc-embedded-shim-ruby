@@ -53,21 +53,15 @@ module SassC
 
     private
 
+    def file_url
+      @file_url ||= URL.path_to_file_url(File.absolute_path(filename || 'stdin'))
+    end
+
     def output_path
       @output_path ||= @options.fetch(
         :output_path,
         ("#{filename.delete_suffix(File.extname(filename))}.css" if filename)
       )
-    end
-
-    def file_url
-      @file_url ||= URL.path_to_file_url(File.absolute_path(filename || 'stdin'))
-    end
-
-    def syntax
-      syntax = @options.fetch(:syntax, :scss)
-      syntax = :indented if syntax.to_sym == :sass
-      syntax
     end
 
     def output_style
@@ -86,6 +80,12 @@ module SassC
           style
         end
       end
+    end
+
+    def syntax
+      syntax = @options.fetch(:syntax, :scss)
+      syntax = :indented if syntax.to_sym == :sass
+      syntax
     end
 
     def load_paths
