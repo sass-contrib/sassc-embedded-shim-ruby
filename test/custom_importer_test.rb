@@ -33,7 +33,7 @@ module SassC
 
     class ParentImporter < Importer
       def imports(_path, parent_path)
-        Import.new('name.scss', source: ".#{parent_path} { color: red; }")
+        Import.new('name.scss', source: ".#{File.basename(parent_path)} { color: red; }")
       end
     end
 

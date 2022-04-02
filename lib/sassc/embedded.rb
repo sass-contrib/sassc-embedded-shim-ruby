@@ -204,7 +204,7 @@ module SassC
       class << self
         def resolve_path(path, from_import)
           ext = File.extname(path)
-          if ['.sass', '.scss', '.css'].include?(ext)
+          unless ext.empty?
             if from_import
               result = exactly_one(try_path("#{without_ext(path)}.import#{ext}"))
               return result unless result.nil?
@@ -305,7 +305,7 @@ module SassC
         return unless url.start_with?(Protocol::FILE)
 
         path = URL.parse(url).route_from(@parent_urls.last).to_s
-        parent_path = @parent_urls.last.route_from(@base_url).to_s
+        parent_path = URL.file_url_to_path(@parent_urls.last.to_s)
 
         imports = @importer.imports(path, parent_path)
         imports = [SassC::Importer::Import.new(path)] if imports.nil?
