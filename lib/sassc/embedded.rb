@@ -291,6 +291,7 @@ module SassC
       def initialize(importer)
         @importer = importer
         @importer_results = {}
+        @base_url = URL.parse(URL.path_to_file_url("#{File.absolute_path('')}/"))
         @parent_urls = [URL.parse(URL.path_to_file_url(File.absolute_path(@importer.options[:filename] || 'stdin')))]
       end
 
@@ -309,11 +310,7 @@ module SassC
         return unless url.start_with?(Protocol::FILE)
 
         path = URL.parse(url).route_from(@parent_urls.last).to_s
-        parent_path = if @parent_urls.first == @parent_urls.last
-                        @importer.options[:filename] || 'stdin'
-                      else
-                        @parent_urls.last.route_from(@parent_urls.first).to_s
-                      end
+        parent_path = @parent_urls.last.route_from(@base_url).to_s
 
         imports = @importer.imports(path, parent_path)
         imports = [SassC::Importer::Import.new(path)] if imports.nil?
