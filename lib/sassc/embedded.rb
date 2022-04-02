@@ -200,9 +200,7 @@ module SassC
       Importer.new(@importer) if @importer
     end
 
-    module FileImporter
-      module_function
-
+    class FileImporter
       def find_file_url(url, from_import:)
         return if url.start_with?('file:')
 
