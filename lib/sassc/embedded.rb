@@ -18,7 +18,7 @@ module SassC
       result = ::Sass.compile_string(
         @template,
         importer: import_handler.setup(nil),
-        load_paths: @options[:importer].nil? ? load_paths : [],
+        load_paths: load_paths,
         syntax: syntax,
         url: file_url,
 
@@ -89,7 +89,11 @@ module SassC
     end
 
     def load_paths
-      @load_paths ||= (@options[:load_paths] || []) + SassC.load_paths
+      @load_paths ||= if @options[:importer].nil?
+                        (@options[:load_paths] || []) + SassC.load_paths
+                      else
+                        []
+                      end
     end
 
     def post_process_source_map(source_map)
