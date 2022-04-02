@@ -338,7 +338,7 @@ module SassC
           @parent_urls.pop
           {
             contents: '',
-            syntax: 'scss'
+            syntax: :scss
           }
         end
       end
