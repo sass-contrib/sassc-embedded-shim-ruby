@@ -11,40 +11,44 @@ task :test do
   Dir.glob('test/**/*_test.rb').sort.each { |f| require_relative f }
 end
 
+namespace :git do
+  namespace :submodule do
+    desc 'Init git submodule'
+    task :init do |_, args|
+      sh(*%w[git submodule init], *args.extras)
+    end
+
+    desc 'Update git submodule'
+    task update: :init do |_, args|
+      sh(*%w[git submodule update --force], *args.extras)
+    end
+
+    desc 'Deinit git submodule'
+    task :deinit do |_, args|
+      sh(*%w[git submodule deinit --force], *args.extras)
+    end
+  end
+end
+
 namespace :rails do
-  submodule = 'vendor/github.com/sass/sassc-rails'
-
-  desc "Init submodule #{submodule}"
-  task :init do
-    sh(*%w[git submodule update --init], submodule)
-  end
-
-  desc "Clean submodule #{submodule}"
-  task clean: :init do
-    sh(*%w[git reset --hard], chdir: submodule)
-    sh(*%w[git clean -dffx], chdir: submodule)
-  end
-
-  desc "Patch submodule #{submodule}"
-  task patch: :clean do
+  desc 'Test sassc-rails'
+  task :test do
+    submodule = 'vendor/github.com/sass/sassc-rails'
+    Rake::Task['git:submodule:update'].invoke(submodule)
     sh(*%w[git apply], File.absolute_path('test/patches/sassc-rails.diff', __dir__), chdir: submodule)
-  end
-
-  desc "Test submodule #{submodule}"
-  task test: :patch do
-    Bundler.with_original_env do
-      %w[
-        Gemfile
-        gemfiles/rails_6_0.gemfile
-        gemfiles/sprockets_4_0.gemfile
-        gemfiles/sprockets-rails_3_0.gemfile
-      ].each do |gemfile|
+    %w[
+      Gemfile
+      gemfiles/rails_6_0.gemfile
+      gemfiles/sprockets_4_0.gemfile
+      gemfiles/sprockets-rails_3_0.gemfile
+    ].each do |gemfile|
+      Bundler.with_original_env do
         env = { 'BUNDLE_GEMFILE' => gemfile }
         sh(env, *%w[bundle install], chdir: submodule)
         sh(env, *%w[bundle exec rake test], chdir: submodule)
       end
     end
-    Rake::Task['rails:clean'].execute
+    Rake::Task['git:submodule:deinit'].invoke(submodule)
   end
 end
 
