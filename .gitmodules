@@ -1,3 +1,6 @@
+[submodule "vendor/github.com/jekyll/jekyll-sass-converter"]
+	path = vendor/github.com/jekyll/jekyll-sass-converter
+	url = https://github.com/jekyll/jekyll-sass-converter.git
 [submodule "vendor/github.com/sass/sassc-rails"]
 	path = vendor/github.com/sass/sassc-rails
 	url = https://github.com/sass/sassc-rails.git

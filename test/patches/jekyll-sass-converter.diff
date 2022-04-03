@@ -1,0 +1,23 @@
+diff --git a/Gemfile b/Gemfile
+index ce9e9a6..ec1ad81 100644
+--- a/Gemfile
++++ b/Gemfile
+@@ -7,3 +7,5 @@ gem "jekyll", ENV["JEKYLL_VERSION"] ? "~> #{ENV["JEKYLL_VERSION"]}" : ">= 4.0"
+ gem "minima"
+ 
+ gem "sass-embedded", "~> 1.0" if RUBY_VERSION >= "2.6.0"
++gem "sassc", github: "sass/sassc-ruby", ref: "refs/pull/233/head"
++gem "sassc-embedded", path: "../../../.."
+diff --git a/spec/spec_helper.rb b/spec/spec_helper.rb
+index f5098c7..4da898b 100644
+--- a/spec/spec_helper.rb
++++ b/spec/spec_helper.rb
+@@ -13,7 +13,7 @@ Jekyll.logger.log_level = :error
+ module GlobalSharedContext
+   extend RSpec::SharedContext
+ 
+-  let(:sass_implementation) { ENV["SASS_IMPLEMENTATION"] }
++  let(:sass_implementation) { "sass-embedded" }
+   let(:sass_embedded?) { sass_implementation == "sass-embedded" }
+ end
+ 

@@ -27,28 +27,37 @@ namespace :git do
     task :deinit do |_, args|
       sh(*%w[git submodule deinit --force], *args.extras)
     end
-  end
-end
 
-namespace :rails do
-  desc 'Test sassc-rails'
-  task :test do
-    submodule = 'vendor/github.com/sass/sassc-rails'
-    Rake::Task['git:submodule:update'].invoke(submodule)
-    sh(*%w[git apply], File.absolute_path('test/patches/sassc-rails.diff', __dir__), chdir: submodule)
-    %w[
-      Gemfile
-      gemfiles/rails_6_0.gemfile
-      gemfiles/sprockets_4_0.gemfile
-      gemfiles/sprockets-rails_3_0.gemfile
-    ].each do |gemfile|
-      Bundler.with_original_env do
-        env = { 'BUNDLE_GEMFILE' => gemfile }
-        sh(env, *%w[bundle install], chdir: submodule)
-        sh(env, *%w[bundle exec rake test], chdir: submodule)
+    desc 'Test git submodule'
+    task :test do |_, args|
+      Rake::Task['git:submodule:update'].invoke(*args.extras)
+      args.extras.each do |submodule|
+        case submodule
+        when 'vendor/github.com/jekyll/jekyll-sass-converter'
+          sh(*%w[git apply], File.absolute_path('test/patches/jekyll-sass-converter.diff', __dir__), chdir: submodule)
+          Bundler.with_original_env do
+            sh(*%w[bundle install], chdir: submodule)
+            sh(*%w[bundle exec rspec], chdir: submodule)
+          end
+        when 'vendor/github.com/sass/sassc-rails'
+          sh(*%w[git apply], File.absolute_path('test/patches/sassc-rails.diff', __dir__), chdir: submodule)
+          Bundler.with_original_env do
+            gemfiles = %w[
+              Gemfile
+              gemfiles/rails_6_0.gemfile
+              gemfiles/sprockets_4_0.gemfile
+              gemfiles/sprockets-rails_3_0.gemfile
+            ]
+            gemfiles.each do |gemfile|
+              env = { 'BUNDLE_GEMFILE' => gemfile }
+              sh(env, *%w[bundle install], chdir: submodule)
+              sh(env, *%w[bundle exec rake test], chdir: submodule)
+            end
+          end
+        end
       end
+      Rake::Task['git:submodule:deinit'].invoke(*args.extras)
     end
-    Rake::Task['git:submodule:deinit'].invoke(submodule)
   end
 end
 
