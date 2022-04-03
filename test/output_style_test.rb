@@ -84,7 +84,19 @@ module SassC
     def test_compact_output
       engine = Engine.new(input_scss, style: :sass_style_compact)
       assert_equal <<~CSS, engine.render
-        #main{color:#fff;background-color:#000}#main p{width:10em}.huge{font-size:10em;font-weight:bold;text-decoration:underline}
+        #main {
+          color: #fff;
+          background-color: #000;
+        }
+        #main p {
+          width: 10em;
+        }
+
+        .huge {
+          font-size: 10em;
+          font-weight: bold;
+          text-decoration: underline;
+        }
       CSS
     end
 

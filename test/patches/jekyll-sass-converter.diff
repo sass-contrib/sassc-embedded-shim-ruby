@@ -8,16 +8,29 @@ index ce9e9a6..ec1ad81 100644
  gem "sass-embedded", "~> 1.0" if RUBY_VERSION >= "2.6.0"
 +gem "sassc", github: "sass/sassc-ruby", ref: "refs/pull/233/head"
 +gem "sassc-embedded", path: "../../../.."
+diff --git a/spec/scss_converter_spec.rb b/spec/scss_converter_spec.rb
+index d9966d8..af13768 100644
+--- a/spec/scss_converter_spec.rb
++++ b/spec/scss_converter_spec.rb
+@@ -122,7 +122,7 @@ describe(Jekyll::Converters::Scss) do
+       end
+ 
+       it "defaults style to :expanded for sass-embedded or :compact for sassc" do
+-        expected = sass_embedded? ? :expanded : :compact
++        expected = :compact
+         expect(verter.sass_configs[:style]).to eql(expected)
+       end
+ 
 diff --git a/spec/spec_helper.rb b/spec/spec_helper.rb
-index f5098c7..4da898b 100644
+index f5098c7..f125b7f 100644
 --- a/spec/spec_helper.rb
 +++ b/spec/spec_helper.rb
-@@ -13,7 +13,7 @@ Jekyll.logger.log_level = :error
- module GlobalSharedContext
+@@ -14,7 +14,7 @@ module GlobalSharedContext
    extend RSpec::SharedContext
  
--  let(:sass_implementation) { ENV["SASS_IMPLEMENTATION"] }
-+  let(:sass_implementation) { "sass-embedded" }
-   let(:sass_embedded?) { sass_implementation == "sass-embedded" }
+   let(:sass_implementation) { ENV["SASS_IMPLEMENTATION"] }
+-  let(:sass_embedded?) { sass_implementation == "sass-embedded" }
++  let(:sass_embedded?) { true }
  end
  
+ RSpec.configure do |config|

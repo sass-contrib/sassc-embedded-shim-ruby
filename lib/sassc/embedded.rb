@@ -72,10 +72,8 @@ module SassC
 
         style = style.delete_prefix('sass_style_').to_sym
         case style
-        when :nested
+        when :nested, :compact
           :expanded
-        when :compact
-          :compressed
         else
           style
         end

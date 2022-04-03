@@ -43,12 +43,10 @@ See [rubydoc.info/gems/sassc](https://rubydoc.info/gems/sassc) for full API docu
 
 ## Behavioral Differences from SassC Ruby
 
-1. Option `:style => :nested` behaves as `:expanded`.
+1. Option `:style => :nested` and `:style => :compact` behave as `:style => :expanded`.
 
-2. Option `:style => :compact` behaves as `:compressed`.
+2. Option `:precision` is ignored.
 
-3. Option `:precision` is ignored.
-
-4. Option `:line_comments` is ignored.
+3. Option `:line_comments` is ignored.
 
 See [the dart-sass documentation](https://github.com/sass/dart-sass#behavioral-differences-from-ruby-sass) for other differences.
