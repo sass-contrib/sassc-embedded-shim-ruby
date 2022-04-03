@@ -7,6 +7,12 @@ Use `sass-embedded` with SassC Ruby!
 
 This library polyfills [`sassc`](https://github.com/sass/sassc-ruby) with the [`sass-embedded`](https://github.com/ntkme/sass-embedded-host-ruby) implementation.
 
+It has been tested with:
+
+- [`sassc`](https://github.com/sass/sassc-ruby)
+- [`sassc-rails`](https://github.com/sass/sassc-rails)
+- [`sprockets`](https://github.com/rails/sprockets)
+- [`sprockets-rails`](https://github.com/rails/sprockets-rails)
 
 ## Install
 
