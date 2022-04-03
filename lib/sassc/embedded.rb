@@ -5,7 +5,6 @@ require 'sass-embedded'
 
 require 'base64'
 require 'json'
-require 'pathname'
 require 'uri'
 
 require_relative 'embedded/version'
@@ -46,8 +45,9 @@ module SassC
       line = e.span&.start&.line
       line += 1 unless line.nil?
       url = e.span&.url
-      path = url&.start_with?('file:') ? URL.file_url_to_path(url) : nil
-      path = relative_path(Dir.pwd, path) unless path.nil?
+      path = if url&.start_with?('file:')
+               URL.parse(url).route_from(URL.path_to_file_url("#{File.absolute_path('')}/"))
+             end
       raise SyntaxError.new(e.message, filename: path, line: line)
     end
 
@@ -62,6 +62,14 @@ module SassC
         :output_path,
         ("#{filename.delete_suffix(File.extname(filename))}.css" if filename)
       )
+    end
+
+    def output_url
+      @output_url ||= (URL.path_to_file_url(File.absolute_path(output_path)) if output_path)
+    end
+
+    def source_map_file_url
+      @source_map_file_url ||= (URL.path_to_file_url(File.absolute_path(source_map_file)) if source_map_file)
     end
 
     def output_style
@@ -97,15 +105,12 @@ module SassC
     def post_process_source_map(source_map)
       return unless source_map
 
+      url = URL.parse(source_map_file_url || file_url)
       data = JSON.parse(source_map)
-
-      source_map_dir = File.dirname(source_map_file || '')
-
-      data['file'] = URL.escape(relative_path(source_map_dir, output_path)) if output_path
-
+      data['file'] = URL.parse(output_url).route_from(url).to_s if output_url
       data['sources'].map! do |source|
         if source.start_with?('file:')
-          relative_path(source_map_dir, URL.file_url_to_path(source))
+          URL.parse(source).route_from(url).to_s
         else
           source
         end
@@ -117,18 +122,15 @@ module SassC
     def post_process_css(css)
       css += "\n" unless css.empty?
       unless @source_map.nil? || omit_source_map_url?
-        url = if source_map_embed?
-                "data:application/json;base64,#{Base64.strict_encode64(@source_map)}"
-              else
-                URL.escape(relative_path(File.dirname(output_path || ''), source_map_file))
-              end
-        css += "\n/*# sourceMappingURL=#{url} */"
+        url = URL.parse(output_url || file_url)
+        source_mapping_url = if source_map_embed?
+                               "data:application/json;base64,#{Base64.strict_encode64(@source_map)}"
+                             else
+                               URL.parse(source_map_file_url).route_from(url).to_s
+                             end
+        css += "\n/*# sourceMappingURL=#{source_mapping_url} */"
       end
       css
-    end
-
-    def relative_path(from, to)
-      Pathname.new(File.absolute_path(to)).relative_path_from(Pathname.new(File.absolute_path(from))).to_s
     end
   end
 

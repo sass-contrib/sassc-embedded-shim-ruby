@@ -3,7 +3,7 @@
 require 'bundler/gem_tasks'
 require 'rubocop/rake_task'
 
-task default: %i[rubocop test rails:test]
+task default: %i[rubocop test git:submodule:test]
 
 desc 'Run all tests'
 task :test do
@@ -30,17 +30,25 @@ namespace :git do
 
     desc 'Test git submodule'
     task :test do |_, args|
-      Rake::Task['git:submodule:update'].invoke(*args.extras)
-      args.extras.each do |submodule|
+      submodules = if args.extras.empty?
+                     %w[
+                       vendor/github.com/jekyll/jekyll-sass-converter
+                       vendor/github.com/sass/sassc-rails
+                     ]
+                   else
+                     args.extras
+                   end
+      Rake::Task['git:submodule:update'].invoke(*submodules)
+      submodules.each do |submodule|
+        patch = File.absolute_path("test/patches/#{File.basename(submodule)}.diff", __dir__)
+        sh(*%w[git apply], patch, chdir: submodule) if File.exist?(patch)
         case submodule
         when 'vendor/github.com/jekyll/jekyll-sass-converter'
-          sh(*%w[git apply], File.absolute_path('test/patches/jekyll-sass-converter.diff', __dir__), chdir: submodule)
           Bundler.with_original_env do
             sh(*%w[bundle install], chdir: submodule)
             sh(*%w[bundle exec rspec], chdir: submodule)
           end
         when 'vendor/github.com/sass/sassc-rails'
-          sh(*%w[git apply], File.absolute_path('test/patches/sassc-rails.diff', __dir__), chdir: submodule)
           Bundler.with_original_env do
             gemfiles = %w[
               Gemfile
@@ -56,7 +64,7 @@ namespace :git do
           end
         end
       end
-      Rake::Task['git:submodule:deinit'].invoke(*args.extras)
+      Rake::Task['git:submodule:deinit'].invoke(*submodules)
     end
   end
 end
