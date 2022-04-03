@@ -52,7 +52,7 @@ jobs:
     strategy:
       matrix:
         os: [macos-latest, ubuntu-latest, windows-latest]
-        ruby-version: ['ruby']
+        ruby-version: ['2.6', '2.7', '3.0', 'ruby']
 
     steps:
     - name: Checkout
@@ -74,7 +74,10 @@ jobs:
     strategy:
       matrix:
         os: [macos-latest, ubuntu-latest, windows-latest]
-        ruby-version: ['ruby']
+        ruby-version: ['2.6', '2.7', '3.0', 'ruby', 'jruby']
+        exclude:
+          - os: windows-latest
+            ruby-version: jruby
 
     steps:
     - name: Checkout
