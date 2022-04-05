@@ -204,12 +204,21 @@ module SassC
       class << self
         def resolve_path(path, from_import)
           ext = File.extname(path)
-          unless ext.empty?
+          if ['.sass', '.scss', '.css'].include?(ext)
             if from_import
               result = exactly_one(try_path("#{without_ext(path)}.import#{ext}"))
               return result unless result.nil?
             end
             return exactly_one(try_path(path))
+          end
+
+          unless ext.empty?
+            if from_import
+              result = exactly_one(try_path("#{without_ext(path)}.import#{ext}"))
+              return result unless result.nil?
+            end
+            result = exactly_one(try_path(path))
+            return result unless result.nil?
           end
 
           if from_import
