@@ -369,7 +369,14 @@ module SassC
       end
 
       def syntax(path)
-        File.extname(path) == '.sass' ? :indented : :scss
+        case File.extname(path)
+        when '.sass'
+          :indented
+        when '.css'
+          :css
+        else
+          :scss
+        end
       end
 
       def imports_to_native(imports)
