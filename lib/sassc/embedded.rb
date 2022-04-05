@@ -307,7 +307,9 @@ module SassC
 
           path = URL.parse(url).route_from(@parent_urls.last).to_s
           resolved = resolve_path(path, URL.file_url_to_path(@parent_urls.last), from_import)
-          return resolved.nil? ? nil : URL.path_to_file_url(resolved)
+          return URL.path_to_file_url(resolved) unless resolved.nil?
+
+          return
         end
 
         return unless url.start_with?(Protocol::FILE)
