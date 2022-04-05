@@ -2,8 +2,6 @@
 
 require 'sassc-embedded'
 
-Sass.info
-
 require 'fileutils'
 require 'minitest/autorun'
 require 'minitest/pride'
