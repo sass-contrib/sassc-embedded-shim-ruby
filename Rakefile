@@ -48,6 +48,16 @@ namespace :git do
             sh(*%w[bundle install], chdir: submodule)
             sh(*%w[bundle exec rspec], chdir: submodule)
           end
+        when 'vendor/github.com/rails/sprockets'
+          Bundler.with_original_env do
+            sh(*%w[bundle install], chdir: submodule)
+            sh(*%w[bundle exec rake test TEST=test/test_sassc.rb], chdir: submodule)
+          end
+        when 'vendor/github.com/rtomayko/tilt'
+          Bundler.with_original_env do
+            sh(*%w[bundle install], chdir: submodule)
+            sh(*%w[bundle exec rake test TEST=test/tilt_sasstemplate_test.rb], chdir: submodule)
+          end
         when 'vendor/github.com/sass/sassc-rails'
           Bundler.with_original_env do
             gemfiles = %w[
