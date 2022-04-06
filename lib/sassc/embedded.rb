@@ -293,11 +293,6 @@ module SassC
       end
 
       def canonicalize(url, from_import:)
-        if url.start_with?(Protocol::LOADED)
-          @parent_urls.pop
-          return url
-        end
-
         if url.start_with?(Protocol::IMPORT)
           url = @canonical_urls.delete(url.delete_prefix(Protocol::IMPORT))
           return url if url.start_with?(Protocol::IMPORT)
@@ -310,26 +305,27 @@ module SassC
                             URL.path_to_file_url(resolved) unless resolved.nil?
                           end
           @parent_urls.push(canonical_url)
-          return canonical_url
+          canonical_url
+        elsif url.start_with?(Protocol::FILE)
+          path = URL.parse(url).route_from(@parent_urls.last).to_s
+          parent_path = URL.file_url_to_path(@parent_urls.last)
+
+          imports = @importer.imports(path, parent_path)
+          imports = [SassC::Importer::Import.new(path)] if imports.nil?
+          imports = [imports] unless imports.is_a?(Array)
+          imports.each do |import|
+            import.path = File.absolute_path(import.path, File.dirname(parent_path))
+          end
+
+          id = next_id
+          canonical_url = "#{Protocol::IMPORT}#{id}"
+          @canonical_urls[id] = canonical_url
+          @importer_results[canonical_url] = imports_to_native(imports)
+          canonical_url
+        elsif url.start_with?(Protocol::LOADED)
+          @parent_urls.pop
+          url
         end
-
-        return unless url.start_with?(Protocol::FILE)
-
-        path = URL.parse(url).route_from(@parent_urls.last).to_s
-        parent_path = URL.file_url_to_path(@parent_urls.last)
-
-        imports = @importer.imports(path, parent_path)
-        imports = [SassC::Importer::Import.new(path)] if imports.nil?
-        imports = [imports] unless imports.is_a?(Array)
-        imports.each do |import|
-          import.path = File.absolute_path(import.path, File.dirname(parent_path))
-        end
-
-        id = next_id
-        canonical_url = "#{Protocol::IMPORT}#{id}"
-        @canonical_urls[id] = canonical_url
-        @importer_results[canonical_url] = imports_to_native(imports)
-        canonical_url
       end
 
       def load(canonical_url)
