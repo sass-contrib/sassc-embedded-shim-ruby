@@ -36,7 +36,7 @@ module SassC
       )
 
       @dependencies = result.loaded_urls
-                            .filter { |url| url.start_with?('file:') && url != file_url }
+                            .filter { |url| url.start_with?(Protocol::FILE) && url != file_url }
                             .map { |url| URL.file_url_to_path(url) }
       @source_map = post_process_source_map(result.source_map)
 
@@ -45,7 +45,7 @@ module SassC
       line = e.span&.start&.line
       line += 1 unless line.nil?
       url = e.span&.url
-      path = if url&.start_with?('file:')
+      path = if url&.start_with?(Protocol::FILE)
                URL.parse(url).route_from(URL.path_to_file_url("#{File.absolute_path('')}/"))
              end
       raise SyntaxError.new(e.message, filename: path, line: line)
@@ -109,7 +109,7 @@ module SassC
       data = JSON.parse(source_map)
       data['file'] = URL.parse(output_url).route_from(url).to_s if output_url
       data['sources'].map! do |source|
-        if source.start_with?('file:')
+        if source.start_with?(Protocol::FILE)
           URL.parse(source).route_from(url).to_s
         else
           source
@@ -283,14 +283,6 @@ module SassC
     private_constant :FileImporter
 
     class Importer
-      module Protocol
-        FILE = 'file:'
-        IMPORT = 'sassc-embedded-import:'
-        LOADED = 'sassc-embedded-loaded:'
-      end
-
-      private_constant :Protocol
-
       def initialize(importer)
         @importer = importer
 
@@ -547,6 +539,14 @@ module SassC
       end
     end
   end
+
+  module Protocol
+    FILE = 'file:'
+    IMPORT = 'sassc-embedded-import:'
+    LOADED = 'sassc-embedded-loaded:'
+  end
+
+  private_constant :Protocol
 
   module URL
     PARSER = URI::Parser.new({ RESERVED: ';/?:@&=+$,' })
