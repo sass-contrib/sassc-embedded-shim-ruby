@@ -294,16 +294,12 @@ module SassC
 
       def canonicalize(url, from_import:)
         if url.start_with?(Protocol::IMPORT)
-          url = @canonical_urls.delete(url.delete_prefix(Protocol::IMPORT))
-          return url if url.start_with?(Protocol::IMPORT)
+          canonical_url = @canonical_urls.delete(url.delete_prefix(Protocol::IMPORT))
+          return canonical_url if canonical_url.start_with?(Protocol::IMPORT)
 
-          canonical_url = if @importer_results.key?(url)
-                            url
-                          else
-                            path = URL.parse(url).route_from(@parent_urls.last).to_s
-                            resolved = resolve_path(path, URL.file_url_to_path(@parent_urls.last), from_import)
-                            URL.path_to_file_url(resolved) unless resolved.nil?
-                          end
+          unless @importer_results.key?(canonical_url)
+            canonical_url = resolve_file_url(canonical_url, @parent_urls.last, from_import)
+          end
           @parent_urls.push(canonical_url)
           canonical_url
         elsif url.start_with?(Protocol::FILE)
@@ -353,10 +349,12 @@ module SassC
         @load_paths ||= (@importer.options[:load_paths] || []) + SassC.load_paths
       end
 
-      def resolve_path(path, parent_path, from_import)
+      def resolve_file_url(url, parent_url, from_import)
+        path = URL.parse(url).route_from(parent_url).to_s
+        parent_path = URL.file_url_to_path(parent_url)
         [File.dirname(parent_path)].concat(load_paths).each do |load_path|
           resolved = FileImporter.resolve_path(File.absolute_path(path, load_path), from_import)
-          return resolved unless resolved.nil?
+          return URL.path_to_file_url(resolved) unless resolved.nil?
         end
         nil
       end
