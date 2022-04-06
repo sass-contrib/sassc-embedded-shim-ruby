@@ -286,7 +286,6 @@ module SassC
       module Protocol
         FILE = 'file:'
         IMPORT = 'sassc-embedded-import:'
-        LOAD = 'sassc-embedded-load:'
         LOADED = 'sassc-embedded-loaded:'
       end
 
@@ -294,17 +293,18 @@ module SassC
 
       def initialize(importer)
         @importer = importer
+
+        @canonical_urls = {}
+        @id = 0
         @importer_results = {}
-        @load_id = 0
-        @load_urls = {}
         @parent_urls = [URL.path_to_file_url(File.absolute_path(@importer.options[:filename] || 'stdin'))]
       end
 
       def canonicalize(url, from_import:)
-        return url if url.start_with?(Protocol::IMPORT, Protocol::LOADED)
+        return url if url.start_with?(Protocol::LOADED)
 
-        if url.start_with?(Protocol::LOAD)
-          url = @load_urls.delete(url.delete_prefix(Protocol::LOAD))
+        if url.start_with?(Protocol::IMPORT)
+          url = @canonical_urls.delete(url.delete_prefix(Protocol::IMPORT))
           return url if @importer_results.key?(url)
 
           path = URL.parse(url).route_from(@parent_urls.last).to_s
@@ -326,8 +326,9 @@ module SassC
           import.path = File.absolute_path(import.path, File.dirname(parent_path))
         end
 
-        import_url = URL.path_to_file_url(File.absolute_path(path, File.dirname(parent_path)))
-        canonical_url = "#{Protocol::IMPORT}#{import_url}"
+        id = next_id
+        canonical_url = "#{Protocol::IMPORT}#{id}"
+        @canonical_urls[id] = canonical_url
         @importer_results[canonical_url] = imports_to_native(imports)
         canonical_url
       end
@@ -384,32 +385,37 @@ module SassC
       def imports_to_native(imports)
         {
           contents: imports.flat_map do |import|
-            load_id = @load_id
-            @load_id = load_id.next
-            load_url = URL.path_to_file_url(import.path)
-            @load_urls[load_id.to_s] = load_url
+            id = next_id
+            canonical_url = URL.path_to_file_url(import.path)
+            @canonical_urls[id] = canonical_url
             if import.source
-              @importer_results[load_url] = if import.source.is_a?(Hash)
-                                              {
-                                                contents: import.source[:contents],
-                                                syntax: import.source[:syntax],
-                                                source_map_url: load_url
-                                              }
-                                            else
-                                              {
-                                                contents: import.source,
-                                                syntax: syntax(import.path),
-                                                source_map_url: load_url
-                                              }
-                                            end
+              @importer_results[canonical_url] = if import.source.is_a?(Hash)
+                                                   {
+                                                     contents: import.source[:contents],
+                                                     syntax: import.source[:syntax],
+                                                     source_map_url: canonical_url
+                                                   }
+                                                 else
+                                                   {
+                                                     contents: import.source,
+                                                     syntax: syntax(import.path),
+                                                     source_map_url: canonical_url
+                                                   }
+                                                 end
             end
             [
-              "@import \"#{Protocol::LOAD}#{load_id}\";",
-              "@import \"#{Protocol::LOADED}#{load_id}\";"
+              "@import \"#{Protocol::IMPORT}#{id}\";",
+              "@import \"#{Protocol::LOADED}#{id}\";"
             ]
           end.join("\n"),
           syntax: :scss
         }
+      end
+
+      def next_id
+        id = @id
+        @id = id.next
+        id.to_s
       end
     end
 
