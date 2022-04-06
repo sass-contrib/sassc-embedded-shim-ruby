@@ -295,6 +295,8 @@ module SassC
       def initialize(importer)
         @importer = importer
         @importer_results = {}
+        @load_id = 0
+        @load_urls = {}
         @parent_urls = [URL.path_to_file_url(File.absolute_path(@importer.options[:filename] || 'stdin'))]
       end
 
@@ -302,7 +304,7 @@ module SassC
         return url if url.start_with?(Protocol::IMPORT, Protocol::LOADED)
 
         if url.start_with?(Protocol::LOAD)
-          url = url.delete_prefix(Protocol::LOAD)
+          url = @load_urls.delete(url.delete_prefix(Protocol::LOAD))
           return url if @importer_results.key?(url)
 
           path = URL.parse(url).route_from(@parent_urls.last).to_s
@@ -382,25 +384,28 @@ module SassC
       def imports_to_native(imports)
         {
           contents: imports.flat_map do |import|
-            file_url = URL.path_to_file_url(import.path)
+            load_id = @load_id
+            @load_id = load_id.next
+            load_url = URL.path_to_file_url(import.path)
+            @load_urls[load_id.to_s] = load_url
             if import.source
-              @importer_results[file_url] = if import.source.is_a?(Hash)
+              @importer_results[load_url] = if import.source.is_a?(Hash)
                                               {
                                                 contents: import.source[:contents],
                                                 syntax: import.source[:syntax],
-                                                source_map_url: file_url
+                                                source_map_url: load_url
                                               }
                                             else
                                               {
                                                 contents: import.source,
                                                 syntax: syntax(import.path),
-                                                source_map_url: file_url
+                                                source_map_url: load_url
                                               }
                                             end
             end
             [
-              "@import #{"#{Protocol::LOAD}#{file_url}".inspect};",
-              "@import #{"#{Protocol::LOADED}#{file_url}".inspect};"
+              "@import \"#{Protocol::LOAD}#{load_id}\";",
+              "@import \"#{Protocol::LOADED}#{load_id}\";"
             ]
           end.join("\n"),
           syntax: :scss
