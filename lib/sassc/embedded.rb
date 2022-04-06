@@ -293,17 +293,24 @@ module SassC
       end
 
       def canonicalize(url, from_import:)
-        return url if url.start_with?(Protocol::LOADED)
+        if url.start_with?(Protocol::LOADED)
+          @parent_urls.pop
+          return url
+        end
 
         if url.start_with?(Protocol::IMPORT)
           url = @canonical_urls.delete(url.delete_prefix(Protocol::IMPORT))
-          return url if @importer_results.key?(url)
+          return url if url.start_with?(Protocol::IMPORT)
 
-          path = URL.parse(url).route_from(@parent_urls.last).to_s
-          resolved = resolve_path(path, URL.file_url_to_path(@parent_urls.last), from_import)
-          return URL.path_to_file_url(resolved) unless resolved.nil?
-
-          return
+          canonical_url = if @importer_results.key?(url)
+                            url
+                          else
+                            path = URL.parse(url).route_from(@parent_urls.last).to_s
+                            resolved = resolve_path(path, URL.file_url_to_path(@parent_urls.last), from_import)
+                            URL.path_to_file_url(resolved) unless resolved.nil?
+                          end
+          @parent_urls.push(canonical_url)
+          return canonical_url
         end
 
         return unless url.start_with?(Protocol::FILE)
@@ -326,22 +333,16 @@ module SassC
       end
 
       def load(canonical_url)
-        if canonical_url.start_with?(Protocol::IMPORT)
+        if @importer_results.key?(canonical_url)
           @importer_results.delete(canonical_url)
         elsif canonical_url.start_with?(Protocol::FILE)
-          @parent_urls.push(canonical_url)
-          if @importer_results.key?(canonical_url)
-            @importer_results.delete(canonical_url)
-          else
-            path = URL.file_url_to_path(canonical_url)
-            {
-              contents: File.read(path),
-              syntax: syntax(path),
-              source_map_url: canonical_url
-            }
-          end
+          path = URL.file_url_to_path(canonical_url)
+          {
+            contents: File.read(path),
+            syntax: syntax(path),
+            source_map_url: canonical_url
+          }
         elsif canonical_url.start_with?(Protocol::LOADED)
-          @parent_urls.pop
           {
             contents: '',
             syntax: :scss
