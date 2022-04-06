@@ -323,8 +323,9 @@ module SassC
           @importer_results[canonical_url] = imports_to_native(imports)
           canonical_url
         elsif url.start_with?(Protocol::LOADED)
+          canonical_url = Protocol::LOADED
           @parent_urls.pop
-          url
+          canonical_url
         end
       end
 
