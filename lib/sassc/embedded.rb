@@ -26,7 +26,7 @@ module SassC
         style: output_style,
 
         functions: functions_handler.setup(nil, functions: @functions),
-        importers: [],
+        importers: @options.fetch(:importers, []),
 
         alert_ascii: @options.fetch(:alert_ascii, false),
         alert_color: @options.fetch(:alert_color, nil),
