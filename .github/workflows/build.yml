@@ -45,29 +45,7 @@ jobs:
     - name: Test
       run: bundle exec rake test
 
-  test-jekyll:
-
-    runs-on: ${{ matrix.os }}
-
-    strategy:
-      matrix:
-        os: [macos-latest, ubuntu-latest, windows-latest]
-        ruby-version: ['2.6', '2.7', '3.0', 'ruby']
-
-    steps:
-    - name: Checkout
-      uses: actions/checkout@v3
-
-    - name: Setup ruby
-      uses: ruby/setup-ruby@v1
-      with:
-        ruby-version: ${{ matrix.ruby-version }}
-        bundler-cache: true
-
-    - name: Test
-      run: bundle exec rake git:submodule:test[vendor/github.com/jekyll/jekyll-sass-converter]
-
-  test-rails:
+  test-vendor:
 
     runs-on: ${{ matrix.os }}
 
@@ -75,9 +53,15 @@ jobs:
       matrix:
         os: [macos-latest, ubuntu-latest, windows-latest]
         ruby-version: ['2.6', '2.7', '3.0', 'ruby', 'jruby']
+        submodule:
+          - vendor/github.com/jekyll/jekyll-sass-converter
+          - vendor/github.com/sass/sassc-rails
+          - vendor/github.com/twbs/bootstrap
         exclude:
           - os: windows-latest
             ruby-version: jruby
+          - ruby-version: jruby
+            submodule: vendor/github.com/jekyll/jekyll-sass-converter
 
     steps:
     - name: Checkout
@@ -90,13 +74,13 @@ jobs:
         bundler-cache: true
 
     - name: Test
-      run: bundle exec rake git:submodule:test[vendor/github.com/sass/sassc-rails]
+      run: bundle exec rake git:submodule:test[${{matrix.submodule}}]
 
   release:
 
     if: github.event.repository.fork == false && github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
 
-    needs: [lint, test, test-jekyll, test-rails]
+    needs: [lint, test, test-vendor]
 
     runs-on: ubuntu-latest
 

@@ -1,15 +1,17 @@
 # frozen_string_literal: true
 
 require 'bundler/gem_tasks'
+require 'rake/testtask'
 require 'rubocop/rake_task'
 
 task default: %i[rubocop test git:submodule:test]
 
-desc 'Run all tests'
-task :test do
-  $LOAD_PATH.unshift('lib', 'test')
-  Dir.glob('test/**/*_test.rb').sort.each { |f| require_relative f }
+Rake::TestTask.new do |t|
+  t.libs << 'test'
+  t.test_files = FileList['test/**/*_test.rb']
 end
+
+RuboCop::RakeTask.new
 
 namespace :git do
   namespace :submodule do
@@ -34,6 +36,7 @@ namespace :git do
                      %w[
                        vendor/github.com/jekyll/jekyll-sass-converter
                        vendor/github.com/sass/sassc-rails
+                       vendor/github.com/twbs/bootstrap
                      ]
                    else
                      args.extras
@@ -72,11 +75,14 @@ namespace :git do
               sh(env, *%w[bundle exec rake test], chdir: submodule)
             end
           end
+        when 'vendor/github.com/twbs/bootstrap'
+          Bundler.with_original_env do
+            env = { 'VENDOR_PATH' => File.join(submodule, 'scss/bootstrap') }
+            sh(env, *%w[bundle exec rake test TEST=test/vendor_test.rb])
+          end
         end
       end
       Rake::Task['git:submodule:deinit'].invoke(*submodules)
     end
   end
 end
-
-RuboCop::RakeTask.new

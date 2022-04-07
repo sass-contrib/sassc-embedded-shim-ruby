@@ -10,3 +10,6 @@
 [submodule "vendor/github.com/sass/sassc-rails"]
 	path = vendor/github.com/sass/sassc-rails
 	url = https://github.com/sass/sassc-rails.git
+[submodule "vendor/github.com/twbs/bootstrap"]
+	path = vendor/github.com/twbs/bootstrap
+	url = https://github.com/twbs/bootstrap.git
