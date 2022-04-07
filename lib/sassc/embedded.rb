@@ -295,8 +295,6 @@ module SassC
       def canonicalize(url, from_import:)
         if url.start_with?(Protocol::IMPORT)
           canonical_url = @canonical_urls.delete(url.delete_prefix(Protocol::IMPORT))
-          return canonical_url if canonical_url.start_with?(Protocol::IMPORT)
-
           unless @importer_results.key?(canonical_url)
             canonical_url = resolve_file_url(canonical_url, @parent_urls.last, from_import)
           end
@@ -313,9 +311,7 @@ module SassC
             import.path = File.absolute_path(import.path, File.dirname(parent_path))
           end
 
-          id = next_id
-          canonical_url = "#{Protocol::IMPORT}#{id}"
-          @canonical_urls[id] = canonical_url
+          canonical_url = "#{Protocol::IMPORT}#{next_id}"
           @importer_results[canonical_url] = imports_to_native(imports)
           canonical_url
         elsif url.start_with?(Protocol::LOADED)
