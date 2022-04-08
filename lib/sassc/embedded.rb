@@ -45,9 +45,7 @@ module SassC
       line = e.span&.start&.line
       line += 1 unless line.nil?
       url = e.span&.url
-      path = if url&.start_with?(Protocol::FILE)
-               URL.parse(url).route_from(URL.path_to_file_url("#{File.absolute_path('')}/"))
-             end
+      path = (URL.parse(url).route_from(URL.path_to_file_url("#{Dir.pwd}/")) if url&.start_with?(Protocol::FILE))
       raise SyntaxError.new(e.full_message, filename: path, line: line)
     end
 
