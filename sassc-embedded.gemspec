@@ -8,8 +8,8 @@ Gem::Specification.new do |spec| # rubocop:disable Gemspec/RequireMFA
   spec.authors       = ['なつき']
   spec.email         = ['i@ntk.me']
   spec.summary       = 'Use dart-sass with SassC!'
-  spec.description   = 'An embedded sass polyfill for SassC.'
-  spec.homepage      = 'https://github.com/ntkme/sassc-embedded-polyfill-ruby'
+  spec.description   = 'An embedded sass shim for SassC.'
+  spec.homepage      = 'https://github.com/ntkme/sassc-embedded-shim-ruby'
   spec.license       = 'MIT'
   spec.metadata      = {
     'documentation_uri' => "https://rubydoc.info/gems/#{spec.name}/#{spec.version}",
