@@ -4,9 +4,6 @@
 [submodule "vendor/github.com/rails/sprockets"]
 	path = vendor/github.com/rails/sprockets
 	url = https://github.com/rails/sprockets.git
-[submodule "vendor/github.com/rtomayko/tilt"]
-	path = vendor/github.com/rtomayko/tilt
-	url = https://github.com/rtomayko/tilt.git
 [submodule "vendor/github.com/sass/sassc-rails"]
 	path = vendor/github.com/sass/sassc-rails
 	url = https://github.com/sass/sassc-rails.git
