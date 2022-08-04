@@ -21,6 +21,7 @@ module SassC
         syntax: syntax,
         url: file_url,
 
+        charset: @options.fetch(:charset, true),
         source_map: source_map_embed? || !source_map_file.nil?,
         source_map_include_sources: source_map_contents?,
         style: output_style,
