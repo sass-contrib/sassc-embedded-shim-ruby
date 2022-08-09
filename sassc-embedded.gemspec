@@ -29,7 +29,7 @@ Gem::Specification.new do |spec| # rubocop:disable Gemspec/RequireMFA
 
   spec.add_development_dependency 'minitest', '~> 5.16.0'
   spec.add_development_dependency 'minitest-around', '~> 0.5.0'
-  spec.add_development_dependency 'rubocop', '~> 1.33.0'
+  spec.add_development_dependency 'rubocop', '~> 1.34.1'
   spec.add_development_dependency 'rubocop-minitest', '~> 0.21.0'
   spec.add_development_dependency 'rubocop-performance', '~> 1.14.0'
   spec.add_development_dependency 'rubocop-rake', '~> 0.6.0'
