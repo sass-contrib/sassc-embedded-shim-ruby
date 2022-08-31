@@ -15,7 +15,6 @@ jobs:
       uses: ruby/setup-ruby@v1
       with:
         ruby-version: ruby
-        rubygems: latest
         bundler-cache: true
 
     - name: Lint
@@ -41,7 +40,6 @@ jobs:
       uses: ruby/setup-ruby@v1
       with:
         ruby-version: ${{ matrix.ruby-version }}
-        rubygems: latest
         bundler-cache: true
 
     - name: Test
@@ -73,7 +71,6 @@ jobs:
       uses: ruby/setup-ruby@v1
       with:
         ruby-version: ${{ matrix.ruby-version }}
-        rubygems: latest
         bundler-cache: true
 
     - name: Test
