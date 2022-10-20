@@ -34,7 +34,6 @@ namespace :git do
     task :test do |_, args|
       submodules = if args.extras.empty?
                      %w[
-                       vendor/github.com/jekyll/jekyll-sass-converter
                        vendor/github.com/sass/sassc-rails
                        vendor/github.com/twbs/bootstrap
                      ]
@@ -46,11 +45,6 @@ namespace :git do
         patch = File.absolute_path("test/patches/#{File.basename(submodule)}.diff", __dir__)
         sh(*%w[git apply], patch, chdir: submodule) if File.exist?(patch)
         case submodule
-        when 'vendor/github.com/jekyll/jekyll-sass-converter'
-          Bundler.with_original_env do
-            sh(*%w[bundle install], chdir: submodule)
-            sh(*%w[bundle exec rspec], chdir: submodule)
-          end
         when 'vendor/github.com/rails/sprockets'
           Bundler.with_original_env do
             sh(*%w[bundle install], chdir: submodule)

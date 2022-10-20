@@ -1,6 +1,3 @@
-[submodule "vendor/github.com/jekyll/jekyll-sass-converter"]
-	path = vendor/github.com/jekyll/jekyll-sass-converter
-	url = https://github.com/jekyll/jekyll-sass-converter.git
 [submodule "vendor/github.com/rails/sprockets"]
 	path = vendor/github.com/rails/sprockets
 	url = https://github.com/rails/sprockets.git
