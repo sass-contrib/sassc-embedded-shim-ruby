@@ -21,6 +21,7 @@ module SassC
         }
       CSS
       output = Engine.new(template, line_comments: true).render
+
       assert_equal expected_output, output
     end
 
@@ -83,6 +84,7 @@ module SassC
         }
       CSS
       output = Engine.new(template, precision: 8).render
+
       assert_equal expected_output, output
     end
 
@@ -99,6 +101,7 @@ module SassC
         }
       CSS
       output = Engine.new(template).render
+
       assert_equal expected_output, output
     end
 
@@ -115,6 +118,7 @@ module SassC
       deps = engine.dependencies
 
       expected = ['/import.scss', '/import_parent.scss']
+
       assert_equal expected, deps.map { |dep| dep.options[:filename].gsub(base, '') }.sort
       assert_equal expected, deps.map { |dep| dep.filename.gsub(base, '') }.sort
     end
@@ -123,6 +127,7 @@ module SassC
       engine = Engine.new('$size: 30px;')
       engine.render
       deps = engine.dependencies
+
       assert_empty deps
     end
 
@@ -212,6 +217,7 @@ module SassC
       expected_load_paths = %w[included_1 included_2]
       ::SassC.instance_eval { @load_paths = nil }
       ENV['SASS_PATH'] = expected_load_paths.join(File::PATH_SEPARATOR)
+
       assert_equal expected_load_paths, ::SassC.load_paths
       ::SassC.load_paths.clear
       ENV['SASS_PATH'] = nil
@@ -249,6 +255,7 @@ module SassC
       input = +'$size: 30px;'
       input.force_encoding('UTF-8')
       output = Engine.new(input).render
+
       assert_equal input.encoding, output.encoding
     end
 
@@ -270,23 +277,27 @@ module SassC
 
     def test_empty_template
       output = Engine.new('').render
+
       assert_equal '', output
     end
 
     def test_empty_template_returns_a_new_object
       input = +''
       output = Engine.new(input).render
+
       refute input.equal?(output), 'empty template must return a new object'
     end
 
     def test_empty_template_encoding_matches_input
       input = (+'').force_encoding('ISO-8859-1')
       output = Engine.new(input).render
+
       assert_equal input.encoding, output.encoding
     end
 
     def test_handling_of_frozen_strings
       output = Engine.new('body { background-color: red; }').render
+
       assert_equal("body {\n  background-color: red;\n}\n", output)
     end
 
@@ -299,6 +310,7 @@ module SassC
       CSS
 
       output = Engine.new("@import 'test'").render
+
       assert_equal expected_output, output
     end
   end

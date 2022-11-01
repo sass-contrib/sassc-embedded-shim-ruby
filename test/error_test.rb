@@ -22,6 +22,7 @@ module SassC
         render(template, filename: filename)
       rescue SassC::SyntaxError => e
         expected = "#{filename}:3"
+
         assert_equal expected, e.backtrace.first
       end
     end
