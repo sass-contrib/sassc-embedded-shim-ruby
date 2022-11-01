@@ -16,6 +16,7 @@ module SassC
         actual = SassC::Engine.new("@import '#{URL.escape(path)}';", {
                                      importer: PassthroughImporter
                                    }).render
+
         assert_equal expected, actual
       end
     end

@@ -181,6 +181,7 @@ module SassC
         10.times do |i|
           threads << Thread.new(i) do |id|
             out = Engine.new('div { url: inspect_options(); }', { test_key1: 'test_value', test_key2: id }).render
+
             assert_match(/test_key1/, out)
             assert_match(/test_key2/, out)
             assert_match(/test_value/, out)
@@ -193,6 +194,7 @@ module SassC
 
     def test_pass_custom_functions_as_a_parameter
       out = Engine.new('div { url: test-function(); }', { functions: ExternalFunctions }).render
+
       assert_match(/custom_function/, out)
     end
 
@@ -206,6 +208,7 @@ module SassC
 
     def assert_sass(sass, expected_css)
       engine = Engine.new(sass)
+
       assert_equal expected_css.strip.gsub!(/\s+/, ' '), # poor man's String#squish
                    engine.render.strip.gsub!(/\s+/, ' ')
     end
