@@ -1,96 +1,104 @@
 diff --git a/Gemfile b/Gemfile
-index 09189d3..db52aac 100644
+index 09189d3..fb8d9f1 100644
 --- a/Gemfile
 +++ b/Gemfile
-@@ -5,3 +5,7 @@ source 'https://rubygems.org'
+@@ -5,3 +5,8 @@ source 'https://rubygems.org'
  
  # Specify your gem's dependencies in sassc-rails.gemspec
  gemspec
 +
++gem 'ruby2_keywords'
 +gem 'tzinfo-data' if Gem.win_platform?
 +gem 'sassc', github: 'sass/sassc-ruby', ref: 'refs/pull/233/head'
 +gem 'sassc-embedded', path: '../../../..'
 diff --git a/gemfiles/rails_4_2.gemfile b/gemfiles/rails_4_2.gemfile
-index c27b143..16b8638 100644
+index c27b143..be24585 100644
 --- a/gemfiles/rails_4_2.gemfile
 +++ b/gemfiles/rails_4_2.gemfile
-@@ -4,3 +4,7 @@ gem "rails", "~> 4.2.0"
+@@ -4,3 +4,8 @@ gem "rails", "~> 4.2.0"
  
  # Specify your gem's dependencies in sassc-rails.gemspec
  gemspec path: "../"
 +
++gem 'ruby2_keywords'
 +gem 'tzinfo-data' if Gem.win_platform?
 +gem 'sassc', github: 'sass/sassc-ruby', ref: 'refs/pull/233/head'
 +gem 'sassc-embedded', path: '../../../../..'
 diff --git a/gemfiles/rails_5_2.gemfile b/gemfiles/rails_5_2.gemfile
-index 3682fc7..e17cf57 100644
+index 3682fc7..4aa3566 100644
 --- a/gemfiles/rails_5_2.gemfile
 +++ b/gemfiles/rails_5_2.gemfile
-@@ -4,3 +4,7 @@ gem "rails", "~> 5.2.1"
+@@ -4,3 +4,8 @@ gem "rails", "~> 5.2.1"
  
  # Specify your gem's dependencies in sassc-rails.gemspec
  gemspec path: "../"
 +
++gem 'ruby2_keywords'
 +gem 'tzinfo-data' if Gem.win_platform?
 +gem 'sassc', github: 'sass/sassc-ruby', ref: 'refs/pull/233/head'
 +gem 'sassc-embedded', path: '../../../../..'
 diff --git a/gemfiles/rails_6_0.gemfile b/gemfiles/rails_6_0.gemfile
-index 8f7e3da..3554c2b 100644
+index 8f7e3da..8dda6cb 100644
 --- a/gemfiles/rails_6_0.gemfile
 +++ b/gemfiles/rails_6_0.gemfile
-@@ -4,3 +4,7 @@ gem "rails", "~> 6.0.a"
+@@ -4,3 +4,8 @@ gem "rails", "~> 6.0.a"
  
  # Specify your gem's dependencies in sassc-rails.gemspec
  gemspec path: "../"
 +
++gem 'ruby2_keywords'
 +gem 'tzinfo-data' if Gem.win_platform?
 +gem 'sassc', github: 'sass/sassc-ruby', ref: 'refs/pull/233/head'
 +gem 'sassc-embedded', path: '../../../../..'
 diff --git a/gemfiles/sprockets-rails_2_3.gemfile b/gemfiles/sprockets-rails_2_3.gemfile
-index e378718..a4f9b62 100644
+index e378718..b321ac7 100644
 --- a/gemfiles/sprockets-rails_2_3.gemfile
 +++ b/gemfiles/sprockets-rails_2_3.gemfile
-@@ -4,3 +4,7 @@ gem "sprockets-rails", "~> 2.3.3"
+@@ -4,3 +4,8 @@ gem "sprockets-rails", "~> 2.3.3"
  
  # Specify your gem's dependencies in sassc-rails.gemspec
  gemspec path: "../"
 +
++gem 'ruby2_keywords'
 +gem 'tzinfo-data' if Gem.win_platform?
 +gem 'sassc', github: 'sass/sassc-ruby', ref: 'refs/pull/233/head'
 +gem 'sassc-embedded', path: '../../../../..'
 diff --git a/gemfiles/sprockets-rails_3_0.gemfile b/gemfiles/sprockets-rails_3_0.gemfile
-index 3426de8..da430c3 100644
+index 3426de8..0343ca6 100644
 --- a/gemfiles/sprockets-rails_3_0.gemfile
 +++ b/gemfiles/sprockets-rails_3_0.gemfile
-@@ -4,3 +4,7 @@ gem "sprockets-rails", "~> 3.2"
+@@ -4,3 +4,8 @@ gem "sprockets-rails", "~> 3.2"
  
  # Specify your gem's dependencies in sassc-rails.gemspec
  gemspec path: "../"
 +
++gem 'ruby2_keywords'
 +gem 'tzinfo-data' if Gem.win_platform?
 +gem 'sassc', github: 'sass/sassc-ruby', ref: 'refs/pull/233/head'
 +gem 'sassc-embedded', path: '../../../../..'
 diff --git a/gemfiles/sprockets_3_0.gemfile b/gemfiles/sprockets_3_0.gemfile
-index 98bf2fd..fe33489 100644
+index 98bf2fd..8a38358 100644
 --- a/gemfiles/sprockets_3_0.gemfile
 +++ b/gemfiles/sprockets_3_0.gemfile
-@@ -4,3 +4,7 @@ gem "sprockets", "~> 3.7"
+@@ -4,3 +4,8 @@ gem "sprockets", "~> 3.7"
  
  # Specify your gem's dependencies in sassc-rails.gemspec
  gemspec path: "../"
 +
++gem 'ruby2_keywords'
 +gem 'tzinfo-data' if Gem.win_platform?
 +gem 'sassc', github: 'sass/sassc-ruby', ref: 'refs/pull/233/head'
 +gem 'sassc-embedded', path: '../../../../..'
 diff --git a/gemfiles/sprockets_4_0.gemfile b/gemfiles/sprockets_4_0.gemfile
-index bf7d65c..52d744e 100644
+index bf7d65c..9cfbedc 100644
 --- a/gemfiles/sprockets_4_0.gemfile
 +++ b/gemfiles/sprockets_4_0.gemfile
-@@ -4,3 +4,7 @@ gem "sprockets", "~> 4.0.x"
+@@ -4,3 +4,8 @@ gem "sprockets", "~> 4.0.x"
  
  # Specify your gem's dependencies in sassc-rails.gemspec
  gemspec path: "../"
 +
++gem 'ruby2_keywords'
 +gem 'tzinfo-data' if Gem.win_platform?
 +gem 'sassc', github: 'sass/sassc-ruby', ref: 'refs/pull/233/head'
 +gem 'sassc-embedded', path: '../../../../..'
