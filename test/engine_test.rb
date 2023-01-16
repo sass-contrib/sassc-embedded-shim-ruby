@@ -285,7 +285,7 @@ module SassC
       input = +''
       output = Engine.new(input).render
 
-      refute input.equal?(output), 'empty template must return a new object'
+      refute_same input, output, 'empty template must return a new object'
     end
 
     def test_empty_template_encoding_matches_input
