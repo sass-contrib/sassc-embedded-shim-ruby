@@ -8,7 +8,7 @@ module SassC
 
     class CustomImporter < Importer
       def imports(path, _parent_path)
-        if /styles/.match?(path)
+        if path.include?('styles')
           [
             Import.new("#{path}1.scss", source: '$var1: #000;'),
             Import.new("#{path}2.scss")
