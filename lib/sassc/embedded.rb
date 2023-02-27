@@ -167,9 +167,9 @@ module SassC
     private
 
     def arguments_from_native_list(native_argument_list)
-      native_argument_list.map do |native_value|
+      native_argument_list.filter_map do |native_value|
         Script::ValueConversion.from_native(native_value, @options)
-      end.compact
+      end
     end
 
     begin
