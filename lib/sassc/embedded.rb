@@ -181,10 +181,10 @@ module SassC
     rescue StandardError => e
       unless e.full_message.include?(e.cause.full_message)
         ::Sass::ScriptError.class_eval do
-          def full_message(*args, **kwargs)
-            full_message = super(*args, **kwargs)
+          def full_message(...)
+            full_message = super(...)
             if cause
-              "#{full_message}\n#{cause.full_message(*args, **kwargs)}"
+              "#{full_message}\n#{cause.full_message(...)}"
             else
               full_message
             end
