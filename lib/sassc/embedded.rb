@@ -57,10 +57,9 @@ module SassC
     end
 
     def output_path
-      @output_path ||= @options.fetch(
-        :output_path,
-        ("#{filename.delete_suffix(File.extname(filename))}.css" if filename)
-      )
+      @output_path ||= @options.fetch(:output_path) do
+        "#{filename.delete_suffix(File.extname(filename))}.css" if filename
+      end
     end
 
     def output_url
