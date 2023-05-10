@@ -35,6 +35,12 @@ Or install it yourself as:
 gem install sassc-embedded
 ```
 
+---
+
+The fork of `sassc` at https://github.com/sass/sassc-ruby/pull/233 removes the libsass extension and loads the shim when `require 'sassc'` is invoked.
+
+Alternatively, the original `sassc` gem can be used, but you must explictly call `require 'sassc-embedded'` to load the shim.
+
 ## Usage
 
 This shim utilizes `sass-embedded` to allow you to compile SCSS or SASS syntax to CSS. To compile, use a `SassC::Engine`, e.g.:
