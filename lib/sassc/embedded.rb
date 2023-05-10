@@ -73,7 +73,7 @@ module SassC
     def output_style
       @output_style ||= begin
         style = @options.fetch(:style, :sass_style_nested).to_s
-        style = "sass_style_#{style}" unless style.include?('sass_style_')
+        style = "sass_style_#{style}" unless style.start_with?('sass_style_')
         raise InvalidStyleError unless OUTPUT_STYLES.include?(style.to_sym)
 
         style = style.delete_prefix('sass_style_').to_sym
