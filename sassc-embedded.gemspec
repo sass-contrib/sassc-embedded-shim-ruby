@@ -26,12 +26,4 @@ Gem::Specification.new do |spec| # rubocop:disable Gemspec/RequireMFA
 
   spec.add_runtime_dependency 'sassc', '~> 2.0'
   spec.add_runtime_dependency 'sass-embedded', '~> 1.59'
-
-  spec.add_development_dependency 'minitest', '~> 5.18.0'
-  spec.add_development_dependency 'minitest-around', '~> 0.5.0'
-  spec.add_development_dependency 'rake', '>= 10.0.0'
-  spec.add_development_dependency 'rubocop', '~> 1.50.0'
-  spec.add_development_dependency 'rubocop-minitest', '~> 0.31.0'
-  spec.add_development_dependency 'rubocop-performance', '~> 1.17.1'
-  spec.add_development_dependency 'rubocop-rake', '~> 0.6.0'
 end
