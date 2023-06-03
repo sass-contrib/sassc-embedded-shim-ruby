@@ -36,18 +36,56 @@ module SassC
         verbose: @options.fetch(:verbose, false)
       )
 
-      @dependencies = loaded_files(result.loaded_urls)
-      @source_map = post_process_source_map(result.source_map)
+      @loaded_urls = result.loaded_urls
+      @source_map = result.source_map
 
-      return post_process_css(result.css) unless quiet?
+      return if quiet?
+
+      css = result.css
+      css += "\n" unless css.empty?
+      unless @source_map.nil? || omit_source_map_url?
+        url = URL.parse(output_url || file_url)
+        source_mapping_url = if source_map_embed?
+                               "data:application/json;base64,#{Base64.strict_encode64(@source_map)}"
+                             else
+                               URL.parse(source_map_file_url).route_from(url).to_s
+                             end
+        css += "\n/*# sourceMappingURL=#{source_mapping_url} */"
+      end
+      css
     rescue ::Sass::CompileError => e
-      @dependencies = e.respond_to?(:loaded_urls) ? loaded_files(e.loaded_urls) : []
+      @loaded_urls = e.loaded_urls if e.respond_to?(:loaded_urls)
 
       line = e.span&.start&.line
       line += 1 unless line.nil?
       url = e.span&.url
       path = (URL.parse(url).route_from(URL.path_to_file_url("#{Dir.pwd}/")) if url&.start_with?(Protocol::FILE))
       raise SyntaxError.new(e.full_message, filename: path, line: line)
+    end
+
+    def dependencies
+      raise NotRenderedError unless @loaded_urls
+
+      Dependency.from_filenames(@loaded_urls
+        .filter { |url| url.start_with?(Protocol::FILE) && url != file_url }
+        .map { |url| URL.file_url_to_path(url) })
+    end
+
+    def source_map
+      raise NotRenderedError unless @source_map
+
+      url = URL.parse(source_map_file_url || file_url)
+      data = JSON.parse(@source_map)
+      data['file'] = URL.parse(output_url).route_from(url).to_s if output_url
+      data['sources'].map! do |source|
+        if source.start_with?(Protocol::FILE)
+          URL.parse(source).route_from(url).to_s
+        else
+          source
+        end
+      end
+
+      JSON.generate(data)
     end
 
     private
@@ -98,43 +136,6 @@ module SassC
                       else
                         []
                       end
-    end
-
-    def post_process_source_map(source_map)
-      return unless source_map
-
-      url = URL.parse(source_map_file_url || file_url)
-      data = JSON.parse(source_map)
-      data['file'] = URL.parse(output_url).route_from(url).to_s if output_url
-      data['sources'].map! do |source|
-        if source.start_with?(Protocol::FILE)
-          URL.parse(source).route_from(url).to_s
-        else
-          source
-        end
-      end
-
-      JSON.generate(data)
-    end
-
-    def post_process_css(css)
-      css += "\n" unless css.empty?
-      unless @source_map.nil? || omit_source_map_url?
-        url = URL.parse(output_url || file_url)
-        source_mapping_url = if source_map_embed?
-                               "data:application/json;base64,#{Base64.strict_encode64(@source_map)}"
-                             else
-                               URL.parse(source_map_file_url).route_from(url).to_s
-                             end
-        css += "\n/*# sourceMappingURL=#{source_mapping_url} */"
-      end
-      css
-    end
-
-    def loaded_files(loaded_urls)
-      loaded_urls
-        .filter { |url| url.start_with?(Protocol::FILE) && url != file_url }
-        .map { |url| URL.file_url_to_path(url) }
     end
   end
 
