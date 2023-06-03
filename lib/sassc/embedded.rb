@@ -36,13 +36,13 @@ module SassC
         verbose: @options.fetch(:verbose, false)
       )
 
-      @dependencies = result.loaded_urls
-                            .filter { |url| url.start_with?(Protocol::FILE) && url != file_url }
-                            .map { |url| URL.file_url_to_path(url) }
+      @dependencies = loaded_files(result.loaded_urls)
       @source_map = post_process_source_map(result.source_map)
 
       return post_process_css(result.css) unless quiet?
     rescue ::Sass::CompileError => e
+      @dependencies = e.respond_to?(:loaded_urls) ? loaded_files(e.loaded_urls) : []
+
       line = e.span&.start&.line
       line += 1 unless line.nil?
       url = e.span&.url
@@ -129,6 +129,12 @@ module SassC
         css += "\n/*# sourceMappingURL=#{source_mapping_url} */"
       end
       css
+    end
+
+    def loaded_files(loaded_urls)
+      loaded_urls
+        .filter { |url| url.start_with?(Protocol::FILE) && url != file_url }
+        .map { |url| URL.file_url_to_path(url) }
     end
   end
 
