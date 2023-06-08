@@ -54,7 +54,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [macos-latest, ubuntu-latest, windows-latest]
-        ruby-version: ['2.7', '3.0', '3.1', 'jruby']
+        ruby-version: ['2.7', '3.0', '3.1']
         submodule:
           - vendor/github.com/sass/sassc-rails
           - vendor/github.com/twbs/bootstrap
