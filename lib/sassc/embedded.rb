@@ -54,7 +54,7 @@ module SassC
       end
       css
     rescue ::Sass::CompileError => e
-      @loaded_urls = e.loaded_urls if e.respond_to?(:loaded_urls)
+      @loaded_urls = e.loaded_urls
 
       line = e.span&.start&.line
       line += 1 unless line.nil?
