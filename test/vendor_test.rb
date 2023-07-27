@@ -3,7 +3,7 @@
 require_relative 'test_helper'
 
 module SassC
-  class VendorTest < MiniTest::Test
+  class VendorTest < Minitest::Test
     class PassthroughImporter < Importer
       def imports(path, _parent_path)
         Import.new(path)
