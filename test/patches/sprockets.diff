@@ -1,11 +1,11 @@
 diff --git a/Gemfile b/Gemfile
-index 43ba651a..9a559e61 100644
+index 3be9c3cd..df08f6a7 100644
 --- a/Gemfile
 +++ b/Gemfile
-@@ -2,3 +2,5 @@ source "https://rubygems.org"
+@@ -1,2 +1,5 @@
+ source "https://rubygems.org"
  gemspec
- 
- gem "rack", github: 'rack/rack'
++
 +gem 'sassc', github: 'sass/sassc-ruby', ref: 'refs/pull/233/head'
 +gem 'sassc-embedded', path: '../../../..'
 diff --git a/test/fixtures/octicons/octicons.scss b/test/fixtures/octicons/octicons.scss
