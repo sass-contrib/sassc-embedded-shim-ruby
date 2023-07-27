@@ -59,7 +59,7 @@ namespace :git do
               gemfiles/sprockets-rails_3_0.gemfile
             ]
             gemfiles.each do |gemfile|
-              env = { 'BUNDLE_GEMFILE' => gemfile }
+              env = { 'BUNDLE_GEMFILE' => gemfile, 'MT_COMPAT' => 'true' }
               sh(env, *%w[bundle install], chdir: submodule)
               sh(env, *%w[bundle exec rake test], chdir: submodule)
             end
