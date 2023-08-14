@@ -47,9 +47,8 @@ namespace :git do
         case submodule
         when 'vendor/github.com/rails/sprockets'
           Bundler.with_original_env do
-            env = { 'MT_COMPAT' => 'true' }
-            sh(env, *%w[bundle install], chdir: submodule)
-            sh(env, *%w[bundle exec rake test TEST=test/test_sassc.rb], chdir: submodule)
+            sh(*%w[bundle install], chdir: submodule)
+            sh(*%w[bundle exec rake test TEST=test/test_sassc.rb], chdir: submodule)
           end
         when 'vendor/github.com/sass/sassc-rails'
           Bundler.with_original_env do
