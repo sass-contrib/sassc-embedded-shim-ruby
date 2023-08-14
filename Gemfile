@@ -10,6 +10,6 @@ group :development do
   gem 'rake', '>= 10.0.0'
   gem 'rubocop', '~> 1.56.0'
   gem 'rubocop-minitest', '~> 0.31.0'
-  gem 'rubocop-performance', '~> 1.18.0'
+  gem 'rubocop-performance', '~> 1.19.0'
   gem 'rubocop-rake', '~> 0.6.0'
 end
