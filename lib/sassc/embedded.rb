@@ -317,7 +317,7 @@ module SassC
           end
 
           canonical_url = "#{Protocol::IMPORT}#{next_id}"
-          @importer_results[canonical_url] = imports_to_native(imports)
+          @importer_results[canonical_url] = imports_to_native(imports, from_import)
           canonical_url
         elsif url.start_with?(Protocol::LOADED)
           canonical_url = Protocol::LOADED
@@ -371,7 +371,7 @@ module SassC
         end
       end
 
-      def imports_to_native(imports)
+      def imports_to_native(imports, from_import)
         {
           contents: imports.flat_map do |import|
             id = next_id
@@ -392,9 +392,10 @@ module SassC
                                                    }
                                                  end
             end
+            at_rule = from_import ? '@import' : '@forward'
             [
-              "@import \"#{Protocol::IMPORT}#{id}\";",
-              "@import \"#{Protocol::LOADED}#{id}\";"
+              "#{at_rule} \"#{Protocol::IMPORT}#{id}\";",
+              "#{at_rule} \"#{Protocol::LOADED}#{id}\";"
             ]
           end.join("\n"),
           syntax: :scss
