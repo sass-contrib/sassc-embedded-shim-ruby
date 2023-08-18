@@ -102,6 +102,29 @@ index bf7d65c..9cfbedc 100644
 +gem 'tzinfo-data' if Gem.win_platform?
 +gem 'sassc', github: 'sass/sassc-ruby', ref: 'refs/pull/233/head'
 +gem 'sassc-embedded', path: '../../../../..'
+diff --git a/sassc-rails.gemspec b/sassc-rails.gemspec
+index 38349f7..34a4eb9 100644
+--- a/sassc-rails.gemspec
++++ b/sassc-rails.gemspec
+@@ -20,13 +20,13 @@ Gem::Specification.new do |spec|
+ 
+   spec.add_development_dependency 'pry'
+   spec.add_development_dependency "bundler"
+-  spec.add_development_dependency "rake", "~> 10.0"
++  spec.add_development_dependency "rake"
+   spec.add_development_dependency 'mocha'
+ 
+-  spec.add_dependency "sassc", ">= 2.0"
++  spec.add_dependency "sassc", "~> 2.4"
+   spec.add_dependency "tilt"
+ 
+-  spec.add_dependency 'railties', '>= 4.0.0'
+-  spec.add_dependency 'sprockets', '> 3.0'
+-  spec.add_dependency 'sprockets-rails'
++  spec.add_dependency 'railties', '~> 6.1'
++  spec.add_dependency 'sprockets', '~> 4.2'
++  spec.add_dependency 'sprockets-rails', '~> 3.4'
+ end
 diff --git a/test/sassc_rails_test.rb b/test/sassc_rails_test.rb
 index a15110d..452a251 100644
 --- a/test/sassc_rails_test.rb
