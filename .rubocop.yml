@@ -7,7 +7,7 @@ AllCops:
   Exclude:
     - 'vendor/**/*'
 
-  TargetRubyVersion: 2.7
+  TargetRubyVersion: 3.0
 
   NewCops: enable
 
