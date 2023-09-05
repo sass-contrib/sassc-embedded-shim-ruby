@@ -13,9 +13,11 @@ module SassC
     def render
       return @template.dup if @template.empty?
 
+      base_importer = import_handler.setup(nil)
+
       result = ::Sass.compile_string(
         @template,
-        importer: import_handler.setup(nil),
+        importer: base_importer,
         load_paths: load_paths,
         syntax: syntax,
         url: file_url,
@@ -26,7 +28,7 @@ module SassC
         style: output_style,
 
         functions: functions_handler.setup(nil, functions: @functions),
-        importers: @options.fetch(:importers, []),
+        importers: (base_importer.nil? ? [] : [base_importer]).concat(@options.fetch(:importers, [])),
 
         alert_ascii: @options.fetch(:alert_ascii, false),
         alert_color: @options.fetch(:alert_color, nil),
