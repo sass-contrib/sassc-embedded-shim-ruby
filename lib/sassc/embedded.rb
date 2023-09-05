@@ -3,7 +3,6 @@
 require 'sassc'
 require 'sass-embedded'
 
-require 'base64'
 require 'json'
 require 'uri'
 
@@ -46,7 +45,7 @@ module SassC
       unless @source_map.nil? || omit_source_map_url?
         url = URL.parse(output_url || file_url)
         source_mapping_url = if source_map_embed?
-                               "data:application/json;base64,#{Base64.strict_encode64(@source_map)}"
+                               "data:application/json;base64,#{[@source_map].pack('m0')}"
                              else
                                URL.parse(source_map_file_url).route_from(url).to_s
                              end
