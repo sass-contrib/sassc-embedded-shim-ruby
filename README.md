@@ -19,8 +19,13 @@ It has been tested with:
 Add these lines to your application's Gemfile:
 
 ``` ruby
-gem 'sassc', github: 'sass/sassc-ruby', ref: 'refs/pull/233/head'
+gem 'sassc', github: 'sass/sassc-ruby', ref: 'refs/pull/233/head' # recommended, see comment below
 gem 'sassc-embedded'
+
+# The fork of `sassc` at https://github.com/sass/sassc-ruby/pull/233 removes the libsass extension
+# and loads the shim automatically when `require 'sassc'` is invoked, meaning no code changes needed.
+# ---
+# Alternatively, the shim can be loaded explictly with `require 'sassc-embedded'` in your application.
 ```
 
 And then execute:
@@ -34,12 +39,6 @@ Or install it yourself as:
 ``` sh
 gem install sassc-embedded
 ```
-
----
-
-The fork of `sassc` at https://github.com/sass/sassc-ruby/pull/233 removes the libsass extension and loads the shim when `require 'sassc'` is invoked.
-
-Alternatively, the original `sassc` gem can be used, but you must explictly call `require 'sassc-embedded'` to load the shim.
 
 ## Usage
 
