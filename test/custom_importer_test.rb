@@ -40,10 +40,12 @@ module SassC
     def test_custom_importer_works
       temp_file('styles2.scss', '.hi { color: $var1; }')
       temp_file('fonts.scss', '.font { color: $var1; }')
+      temp_file('スタイル.scss', '.test { color: $var1; }')
 
       data = <<~SCSS
         @import "styles";
         @import "fonts";
+        @import "スタイル";
       SCSS
 
       engine = Engine.new(data, {
@@ -56,6 +58,10 @@ module SassC
         }
 
         .font {
+          color: #000;
+        }
+
+        .test {
           color: #000;
         }
       CSS
