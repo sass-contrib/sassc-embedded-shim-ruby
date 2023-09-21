@@ -49,7 +49,7 @@ module SassC
         source_mapping_url = if source_map_embed?
                                "data:application/json;base64,#{[@source_map].pack('m0')}"
                              else
-                               URL.parse(source_map_file_url).route_from(url).to_s
+                               URL.unescape(URL.parse(source_map_file_url).route_from(url).to_s)
                              end
         css += "\n/*# sourceMappingURL=#{source_mapping_url} */"
       end
@@ -60,7 +60,9 @@ module SassC
       line = e.span&.start&.line
       line += 1 unless line.nil?
       url = e.span&.url
-      path = (URL.parse(url).route_from(URL.path_to_file_url("#{Dir.pwd}/")) if url&.start_with?(Protocol::FILE))
+      path = if url&.start_with?(Protocol::FILE)
+               URL.unescape(URL.parse(url).route_from(URL.path_to_file_url("#{Dir.pwd}/")).to_s)
+             end
       raise SyntaxError.new(e.full_message, filename: path, line: line)
     end
 
@@ -77,10 +79,10 @@ module SassC
 
       url = URL.parse(source_map_file_url || file_url)
       data = JSON.parse(@source_map)
-      data['file'] = URL.parse(output_url).route_from(url).to_s if output_url
+      data['file'] = URL.unescape(URL.parse(output_url).route_from(url).to_s) if output_url
       data['sources'].map! do |source|
         if source.start_with?(Protocol::FILE)
-          URL.parse(source).route_from(url).to_s
+          URL.unescape(URL.parse(source).route_from(url).to_s)
         else
           source
         end
@@ -307,7 +309,7 @@ module SassC
           @parent_urls.push(canonical_url)
           canonical_url
         elsif url.start_with?(Protocol::FILE)
-          path = URL.parse(url).route_from(@parent_urls.last).to_s
+          path = URL.unescape(URL.parse(url).route_from(@parent_urls.last).to_s)
           parent_path = URL.file_url_to_path(@parent_urls.last)
 
           imports = @importer.imports(path, parent_path)
@@ -352,7 +354,7 @@ module SassC
       end
 
       def resolve_file_url(url, parent_url, from_import)
-        path = URL.parse(url).route_from(parent_url).to_s
+        path = URL.unescape(URL.parse(url).route_from(parent_url).to_s)
         parent_path = URL.file_url_to_path(parent_url)
         [File.dirname(parent_path)].concat(load_paths).each do |load_path|
           resolved = FileImporter.resolve_path(File.absolute_path(path, load_path), from_import)
