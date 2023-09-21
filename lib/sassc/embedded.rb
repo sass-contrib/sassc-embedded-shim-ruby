@@ -298,11 +298,11 @@ module SassC
         @parent_urls = [URL.path_to_file_url(File.absolute_path(@importer.options[:filename] || 'stdin'))]
       end
 
-      def canonicalize(url, from_import:)
+      def canonicalize(url, context)
         if url.start_with?(Protocol::IMPORT)
           canonical_url = @canonical_urls.delete(url.delete_prefix(Protocol::IMPORT))
           unless @importer_results.key?(canonical_url)
-            canonical_url = resolve_file_url(canonical_url, @parent_urls.last, from_import)
+            canonical_url = resolve_file_url(canonical_url, @parent_urls.last, context.from_import)
           end
           @parent_urls.push(canonical_url)
           canonical_url
@@ -318,7 +318,7 @@ module SassC
           end
 
           canonical_url = "#{Protocol::IMPORT}#{next_id}"
-          @importer_results[canonical_url] = imports_to_native(imports, from_import)
+          @importer_results[canonical_url] = imports_to_native(imports, context.from_import)
           canonical_url
         elsif url.start_with?(Protocol::LOADED)
           canonical_url = Protocol::LOADED

@@ -25,5 +25,5 @@ Gem::Specification.new do |spec| # rubocop:disable Gemspec/RequireMFA
   spec.required_ruby_version = '>= 3.0.0'
 
   spec.add_runtime_dependency 'sassc', '~> 2.0'
-  spec.add_runtime_dependency 'sass-embedded', '~> 1.64'
+  spec.add_runtime_dependency 'sass-embedded', '~> 1.68'
 end
