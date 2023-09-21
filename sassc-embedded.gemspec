@@ -17,13 +17,15 @@ Gem::Specification.new do |spec| # rubocop:disable Gemspec/RequireMFA
     'funding_uri' => 'https://github.com/sponsors/ntkme'
   }
 
-  spec.files = Dir['lib/**/*.rb'] + [
+  spec.files = Dir['lib/**/*.rb', 'vendor/github.com/sass/sassc-ruby/lib/**/*.rb'] + [
     'LICENSE',
-    'README.md'
+    'README.md',
+    'vendor/github.com/sass/sassc-ruby/LICENSE.txt'
   ]
+
+  spec.require_paths = ['lib', 'vendor/github.com/sass/sassc-ruby/lib']
 
   spec.required_ruby_version = '>= 3.0.0'
 
-  spec.add_runtime_dependency 'sassc', '~> 2.0'
   spec.add_runtime_dependency 'sass-embedded', '~> 1.68'
 end
