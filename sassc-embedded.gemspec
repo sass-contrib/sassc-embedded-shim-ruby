@@ -12,7 +12,7 @@ Gem::Specification.new do |spec| # rubocop:disable Gemspec/RequireMFA
   spec.homepage      = 'https://github.com/ntkme/sassc-embedded-shim-ruby'
   spec.license       = 'MIT'
   spec.metadata      = {
-    'documentation_uri' => "https://rubydoc.info/gems/#{spec.name}/#{spec.version}",
+    'documentation_uri' => 'https://rubydoc.info/gems/sassc',
     'source_code_uri' => "#{spec.homepage}/tree/v#{spec.version}",
     'funding_uri' => 'https://github.com/sponsors/ntkme'
   }
