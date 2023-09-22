@@ -49,7 +49,7 @@ module SassC
         source_mapping_url = if source_map_embed?
                                "data:application/json;base64,#{[@source_map].pack('m0')}"
                              else
-                               URL.file_urls_to_relative_path(source_map_file_url, url)
+                               URL.file_urls_to_relative_url(source_map_file_url, url)
                              end
         css += "\n/*# sourceMappingURL=#{source_mapping_url} */"
       end
@@ -79,10 +79,10 @@ module SassC
 
       url = URL.parse(source_map_file_url || file_url)
       data = JSON.parse(@source_map)
-      data['file'] = URL.file_urls_to_relative_path(output_url, url) if output_url
+      data['file'] = URL.file_urls_to_relative_url(output_url, url) if output_url
       data['sources'].map! do |source|
         if source.start_with?(Protocol::FILE)
-          URL.file_urls_to_relative_path(source, url)
+          URL.file_urls_to_relative_url(source, url)
         else
           source
         end
@@ -568,8 +568,12 @@ module SassC
       PARSER.unescape(str)
     end
 
+    def file_urls_to_relative_url(url, from_url)
+      URL.parse(url).route_from(from_url).to_s
+    end
+
     def file_urls_to_relative_path(url, from_url)
-      URL.unescape(URL.parse(url).route_from(from_url).to_s)
+      URL.unescape(file_urls_to_relative_url(url, from_url))
     end
 
     def file_url_to_path(url)
