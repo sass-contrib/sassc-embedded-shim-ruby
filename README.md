@@ -14,20 +14,52 @@ It has been tested with:
 - [`sprockets`](https://github.com/rails/sprockets)
 - [`sprockets-rails`](https://github.com/rails/sprockets-rails)
 
-## Install
+## Uninstall `sassc`
 
-Add these lines to your application's Gemfile:
+Execute:
+
+``` sh
+bundle remove sassc
+```
+
+Or uninstall it yourself as:
+
+``` sh
+gem uninstall sassc
+```
+
+**If your application has a transitive dependency on `sassc` that cannot be removed, you can use any of the following workarounds.**
+
+### Workaround One
+
+Add this line to your application's Gemfile:
 
 ``` ruby
-gem 'sassc', github: 'sass/sassc-ruby', ref: 'refs/pull/233/head' # recommended, see comment below
-gem 'sassc-embedded'
+gem 'sassc', github: 'sass/sassc-ruby', ref: 'refs/pull/233/head'
+```
 
-# The fork of `sassc` at https://github.com/sass/sassc-ruby/pull/233 removes the libsass
-# extension and loads the shim automatically when `require 'sassc'` is invoked, meaning
-# no other code changes needed in your application.
-# ---
-# Alternatively, the shim can be loaded explictly by invoking `require 'sassc-embedded'`
-# in your application.
+And then execute:
+
+``` sh
+bundle
+```
+
+The fork of `sassc` at https://github.com/sass/sassc-ruby/pull/233 will load the shim automatically when `require 'sassc'` is invoked, meaning no other code changes needed in your application.
+
+### Workaround Two
+
+Add this line to your application's code:
+
+``` ruby
+require 'sassc-embedded'
+```
+
+## Install `sassc-embedded`
+
+Add this line to your application's Gemfile:
+
+``` ruby
+gem 'sassc-embedded'
 ```
 
 And then execute:
