@@ -15,47 +15,7 @@ It has been tested with:
 - [`sprockets`](https://github.com/rails/sprockets)
 - [`sprockets-rails`](https://github.com/rails/sprockets-rails)
 
-## Uninstall `sassc`
-
-Execute:
-
-``` sh
-bundle remove sassc
-```
-
-Or uninstall it yourself as:
-
-``` sh
-gem uninstall sassc
-```
-
-**If your application has a transitive dependency on `sassc` that cannot be removed, you can use any of the following workarounds.**
-
-### Workaround One
-
-Add this line to your application's Gemfile:
-
-``` ruby
-gem 'sassc', github: 'sass/sassc-ruby', ref: 'refs/pull/233/head'
-```
-
-And then execute:
-
-``` sh
-bundle
-```
-
-The fork of `sassc` at https://github.com/sass/sassc-ruby/pull/233 will load the shim automatically when `require 'sassc'` is invoked, meaning no other code changes needed in your application.
-
-### Workaround Two
-
-Add this line to your application's code:
-
-``` ruby
-require 'sassc-embedded'
-```
-
-## Install `sassc-embedded`
+## Install
 
 Add this line to your application's Gemfile:
 
@@ -96,3 +56,45 @@ See [rubydoc.info/gems/sassc](https://rubydoc.info/gems/sassc) for full API docu
 3. Option `:line_comments` is ignored.
 
 See [the dart-sass documentation](https://github.com/sass/dart-sass#behavioral-differences-from-ruby-sass) for other differences.
+
+## Troubleshooting
+
+### The original `sassc` gem is still being used instead of `sassc-embedded`
+
+When launching an application via `bundle exec`, it puts `sassc-embedded` at higher priority than `sassc` in `$LOAD_PATH`. You can verify the order of `$LOAD_PATH` with the following command:
+
+``` ruby
+bundle exec ruby -e 'puts $LOAD_PATH'
+```
+
+If you see `sassc` has higher priority than `sassc-embedded`, try remove `sassc`:
+
+```
+bundle remove sassc
+```
+
+If your application has a transitive dependency on `sassc` that cannot be removed, you can use one of the following workarounds.
+
+#### Workaround One
+
+Add this line to your application's Gemfile:
+
+``` ruby
+gem 'sassc', github: 'sass/sassc-ruby', ref: 'refs/pull/233/head'
+```
+
+And then execute:
+
+``` sh
+bundle
+```
+
+The fork of `sassc` at https://github.com/sass/sassc-ruby/pull/233 will load the shim whenever `require 'sassc'` is invoked, meaning no other code changes needed in your application.
+
+#### Workaround Two
+
+Add this line to your application's code:
+
+``` ruby
+require 'sassc-embedded'
+```
