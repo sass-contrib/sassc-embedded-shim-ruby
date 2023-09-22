@@ -69,9 +69,9 @@ module SassC
     def dependencies
       raise NotRenderedError unless @loaded_urls
 
-      Dependency.from_filenames(@loaded_urls
-        .filter { |url| url.start_with?(Protocol::FILE) && url != file_url }
-        .map { |url| URL.file_url_to_path(url) })
+      Dependency.from_filenames(@loaded_urls.filter_map do |url|
+        URL.file_url_to_path(url) if url.start_with?(Protocol::FILE) && url != file_url
+      end)
     end
 
     def source_map
