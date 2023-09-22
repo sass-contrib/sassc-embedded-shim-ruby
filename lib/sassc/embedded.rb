@@ -569,11 +569,11 @@ module SassC
     end
 
     def file_urls_to_relative_url(url, from_url)
-      URL.parse(url).route_from(from_url).to_s
+      parse(url).route_from(from_url).to_s
     end
 
     def file_urls_to_relative_path(url, from_url)
-      URL.unescape(file_urls_to_relative_url(url, from_url))
+      unescape(file_urls_to_relative_url(url, from_url))
     end
 
     def file_url_to_path(url)
