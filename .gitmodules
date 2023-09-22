@@ -7,6 +7,6 @@
 [submodule "vendor/github.com/sass/sassc-ruby"]
 	path = vendor/github.com/sass/sassc-ruby
 	url = https://github.com/sass/sassc-ruby.git
-[submodule "vendor/github.com/twbs/bootstrap"]
-	path = vendor/github.com/twbs/bootstrap
-	url = https://github.com/twbs/bootstrap.git
+[submodule "vendor/github.com/twbs/bootstrap-rubygem"]
+	path = vendor/github.com/twbs/bootstrap-rubygem
+	url = https://github.com/twbs/bootstrap-rubygem.git

@@ -9,6 +9,7 @@ This library shims [`sassc`](https://github.com/sass/sassc-ruby) with the [`sass
 
 It has been tested with:
 
+- [`bootstrap`](https://github.com/twbs/bootstrap-rubygem)
 - [`sassc`](https://github.com/sass/sassc-ruby)
 - [`sassc-rails`](https://github.com/sass/sassc-rails)
 - [`sprockets`](https://github.com/rails/sprockets)

@@ -1,0 +1,49 @@
+diff --git a/test/gemfiles/rails_6_0.gemfile b/test/gemfiles/rails_6_0.gemfile
+index a92758d..b41d244 100644
+--- a/test/gemfiles/rails_6_0.gemfile
++++ b/test/gemfiles/rails_6_0.gemfile
+@@ -6,3 +6,6 @@ gem 'autoprefixer-rails', '>= 9.7.6'
+ gem 'sassc-rails', '~> 2.0'
+ 
+ gemspec path: '../../'
++
++gem 'sassc', github: 'sass/sassc-ruby', ref: 'refs/pull/233/head'
++gem 'sassc-embedded', path: '../../../../../..'
+diff --git a/test/gemfiles/rails_6_1.gemfile b/test/gemfiles/rails_6_1.gemfile
+index a9b7f23..6248918 100644
+--- a/test/gemfiles/rails_6_1.gemfile
++++ b/test/gemfiles/rails_6_1.gemfile
+@@ -6,3 +6,6 @@ gem 'autoprefixer-rails', '>= 9.7.6'
+ gem 'sassc-rails', '~> 2.0'
+ 
+ gemspec path: '../../'
++
++gem 'sassc', github: 'sass/sassc-ruby', ref: 'refs/pull/233/head'
++gem 'sassc-embedded', path: '../../../../../..'
+diff --git a/test/gemfiles/rails_7_0_sassc.gemfile b/test/gemfiles/rails_7_0_sassc.gemfile
+index 28a4d05..40fd1a6 100644
+--- a/test/gemfiles/rails_7_0_sassc.gemfile
++++ b/test/gemfiles/rails_7_0_sassc.gemfile
+@@ -6,3 +6,6 @@ gem 'autoprefixer-rails', '>= 9.7.6'
+ gem 'sassc-rails', '~> 2.0'
+ 
+ gemspec path: '../../'
++
++gem 'sassc', github: 'sass/sassc-ruby', ref: 'refs/pull/233/head'
++gem 'sassc-embedded', path: '../../../../../..'
+diff --git a/test/test_helper.rb b/test/test_helper.rb
+index eb002de..6c0c587 100644
+--- a/test/test_helper.rb
++++ b/test/test_helper.rb
+@@ -34,9 +34,9 @@ end
+ 
+ Capybara.configure do |config|
+   config.server = :webrick
+-  config.app_host = 'http://localhost:7000'
++  config.app_host = 'http://localhost:8000'
+   config.default_driver = :cuprite
+   config.javascript_driver = :cuprite
+-  config.server_port = 7000
++  config.server_port = 8000
+   config.default_max_wait_time = 10
+ end

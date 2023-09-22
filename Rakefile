@@ -34,8 +34,9 @@ namespace :git do
     task :test do |_, args|
       submodules = if args.extras.empty?
                      %w[
+                       vendor/github.com/rails/sprockets
                        vendor/github.com/sass/sassc-rails
-                       vendor/github.com/twbs/bootstrap
+                       vendor/github.com/twbs/bootstrap-rubygem
                      ]
                    else
                      args.extras
@@ -64,10 +65,18 @@ namespace :git do
               sh(env, *%w[bundle exec rake test], chdir: submodule)
             end
           end
-        when 'vendor/github.com/twbs/bootstrap'
+        when 'vendor/github.com/twbs/bootstrap-rubygem'
           Bundler.with_original_env do
-            env = { 'VENDOR_PATH' => File.join(submodule, 'scss/bootstrap') }
-            sh(env, *%w[bundle exec rake test TEST=test/vendor_test.rb])
+            gemfiles = %w[
+              test/gemfiles/rails_6_0.gemfile
+              test/gemfiles/rails_6_1.gemfile
+              test/gemfiles/rails_7_0_sassc.gemfile
+            ]
+            gemfiles.each do |gemfile|
+              env = { 'BUNDLE_GEMFILE' => gemfile }
+              sh(env, *%w[bundle install], chdir: submodule)
+              sh(env, *%w[bundle exec rake], chdir: submodule)
+            end
           end
         end
       end
