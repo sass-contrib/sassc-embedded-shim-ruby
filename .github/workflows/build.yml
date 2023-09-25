@@ -70,6 +70,8 @@ jobs:
             submodule: vendor/github.com/rails/sprockets
           - os: windows-latest
             submodule: vendor/github.com/twbs/bootstrap-rubygem
+          - ruby-version: jruby
+            submodule: vendor/github.com/twbs/bootstrap-rubygem
 
     steps:
     - name: Checkout
