@@ -182,6 +182,32 @@ module SassC
       refute_match(/sourceMappingURL/, output)
     end
 
+    def test_source_map_without_path_validation
+      temp_dir('admin')
+
+      temp_file('admin/text-color.scss', <<~SCSS)
+        p {
+          color: red;
+        }
+      SCSS
+      temp_file('style.scss', <<~SCSS)
+        @import 'admin/text-color';
+
+        p {
+          padding: 20px;
+        }
+      SCSS
+      engine = Engine.new(File.read('style.scss'), {
+                            source_map_file: 'style.scss.map?foo=bar',
+                            source_map_contents: true,
+                            validate_source_map_path: false
+                          })
+      output = engine.render
+
+      assert_match(/"version":3/, engine.source_map)
+      assert_match(/style.scss.map\?foo\=bar/, output)
+    end
+
     def test_load_paths
       temp_dir('included_1')
       temp_dir('included_2')

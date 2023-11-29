@@ -50,8 +50,10 @@ module SassC
         url = URL.parse(output_url || file_url)
         source_mapping_url = if source_map_embed?
                                "data:application/json;base64,#{[@source_map].pack('m0')}"
-                             else
+                             elsif validate_source_map_path?
                                URL.file_urls_to_relative_url(source_map_file_url, url)
+                             else
+                               source_map_file_url
                              end
         css += "\n/*# sourceMappingURL=#{source_mapping_url} */"
       end
@@ -83,9 +85,15 @@ module SassC
 
       url = URL.parse(source_map_file_url || file_url)
       data = JSON.parse(@source_map)
-      data['file'] = URL.file_urls_to_relative_url(output_url, url) if output_url
+      if output_url
+        data['file'] = if validate_source_map_path?
+                         URL.file_urls_to_relative_url(output_url, url)
+                       else
+                         output_url
+                       end
+      end
       data['sources'].map! do |source|
-        if source.start_with?(Protocol::FILE)
+        if source.start_with?(Protocol::FILE) && validate_source_map_path?
           URL.file_urls_to_relative_url(source, url)
         else
           source
@@ -112,7 +120,14 @@ module SassC
     end
 
     def source_map_file_url
-      @source_map_file_url ||= (URL.path_to_file_url(File.absolute_path(source_map_file)) if source_map_file)
+      return unless source_map_file
+
+      @source_map_file_url ||=
+        if validate_source_map_path?
+          URL.path_to_file_url(File.absolute_path(source_map_file))
+        else
+          source_map_file
+        end
     end
 
     def output_style
@@ -129,6 +144,10 @@ module SassC
           style
         end
       end
+    end
+
+    def validate_source_map_path?
+      @options.fetch(:validate_source_map_path, true)
     end
 
     def syntax
