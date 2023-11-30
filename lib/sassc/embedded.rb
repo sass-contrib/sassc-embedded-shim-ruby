@@ -592,7 +592,7 @@ module SassC
       return if path.nil?
 
       path = "/#{path}" unless path.start_with?('/')
-      URI::File.build([nil, escape(path)]).to_s
+      "file://#{escape(path)}"
     end
   end
 

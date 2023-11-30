@@ -155,8 +155,35 @@ module SassC
                             source_map_file: 'style.scss.map',
                             source_map_contents: true
                           })
-      engine.render
+      output = engine.render
 
+      assert_includes(output, '/*# sourceMappingURL=style.scss.map */')
+      assert_match(/"version":3/, engine.source_map)
+    end
+
+    def test_source_map_with_query
+      temp_dir('admin')
+
+      temp_file('admin/text-color.scss', <<~SCSS)
+        p {
+          color: red;
+        }
+      SCSS
+      temp_file('style.scss', <<~SCSS)
+        @import 'admin/text-color';
+
+        p {
+          padding: 20px;
+        }
+      SCSS
+      engine = Engine.new(File.read('style.scss'), {
+                            source_map_file: 'style.scss.map?__ws=hostname',
+                            source_map_contents: true
+                          })
+
+      output = engine.render
+
+      assert_includes(output, '/*# sourceMappingURL=style.scss.map?__ws=hostname */')
       assert_match(/"version":3/, engine.source_map)
     end
 
