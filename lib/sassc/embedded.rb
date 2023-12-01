@@ -8,6 +8,10 @@ require 'uri'
 
 require_relative 'embedded/version'
 
+module Sass
+  Compiler = Embedded unless defined?(::Sass::Compiler)
+end
+
 module SassC
   class Engine
     def render
@@ -15,7 +19,7 @@ module SassC
 
       base_importer = import_handler.setup(nil)
 
-      sass = ::Sass::Embedded.new
+      sass = ::Sass::Compiler.new
 
       result = sass.compile_string(
         @template,
