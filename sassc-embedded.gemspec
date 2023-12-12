@@ -9,7 +9,7 @@ Gem::Specification.new do |spec| # rubocop:disable Gemspec/RequireMFA
   spec.email         = ['i@ntk.me']
   spec.summary       = 'Use dart-sass with SassC!'
   spec.description   = 'An embedded sass shim for SassC.'
-  spec.homepage      = 'https://github.com/ntkme/sassc-embedded-shim-ruby'
+  spec.homepage      = 'https://github.com/sass-contrib/sassc-embedded-shim-ruby'
   spec.license       = 'MIT'
   spec.metadata      = {
     'documentation_uri' => 'https://rubydoc.info/gems/sassc',

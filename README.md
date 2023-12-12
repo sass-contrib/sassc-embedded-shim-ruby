@@ -1,11 +1,11 @@
 # Embedded Sass Shim for SassC Ruby
 
-[![build](https://github.com/ntkme/sassc-embedded-shim-ruby/actions/workflows/build.yml/badge.svg)](https://github.com/ntkme/sassc-embedded-shim-ruby/actions/workflows/build.yml)
+[![build](https://github.com/sass-contrib/sassc-embedded-shim-ruby/actions/workflows/build.yml/badge.svg)](https://github.com/sass-contrib/sassc-embedded-shim-ruby/actions/workflows/build.yml)
 [![gem](https://badge.fury.io/rb/sassc-embedded.svg)](https://rubygems.org/gems/sassc-embedded)
 
 Use `sass-embedded` with SassC Ruby!
 
-This library shims [`sassc`](https://github.com/sass/sassc-ruby) with the [`sass-embedded`](https://github.com/ntkme/sass-embedded-host-ruby) implementation.
+This library shims [`sassc`](https://github.com/sass/sassc-ruby) with the [`sass-embedded`](https://github.com/sass-contrib/sass-embedded-host-ruby) implementation.
 
 It has been tested with:
 
