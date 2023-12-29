@@ -19,7 +19,7 @@ module SassC
           }
         SCSS
 
-        render(template, filename: filename)
+        render(template, filename:)
       rescue SassC::SyntaxError => e
         expected = "#{filename}:3"
 

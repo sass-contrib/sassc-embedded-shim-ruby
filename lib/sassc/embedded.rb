@@ -18,8 +18,8 @@ module SassC
       result = ::Sass.compile_string(
         @template,
         importer: base_importer,
-        load_paths: load_paths,
-        syntax: syntax,
+        load_paths:,
+        syntax:,
         url: file_url,
 
         charset: @options.fetch(:charset, true),
@@ -63,7 +63,7 @@ module SassC
       path = if url&.start_with?(Protocol::FILE)
                URL.file_urls_to_relative_path(url, URL.path_to_file_url("#{Dir.pwd}/"))
              end
-      raise SyntaxError.new(e.full_message, filename: path, line: line)
+      raise SyntaxError.new(e.full_message, filename: path, line:)
     end
 
     def dependencies
@@ -153,7 +153,7 @@ module SassC
       end.new
       functions_wrapper.options = @options
 
-      Script.custom_functions(functions: functions).each do |custom_function|
+      Script.custom_functions(functions:).each do |custom_function|
         callback = lambda do |native_argument_list|
           function_arguments = arguments_from_native_list(native_argument_list)
           begin
@@ -167,7 +167,7 @@ module SassC
           raise e
         end
 
-        @callbacks[Script.formatted_function_name(custom_function, functions: functions)] = callback
+        @callbacks[Script.formatted_function_name(custom_function, functions:)] = callback
       end
 
       @callbacks
