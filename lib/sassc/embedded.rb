@@ -8,10 +8,6 @@ require 'uri'
 
 require_relative 'embedded/version'
 
-module Sass
-  Compiler = Embedded unless defined?(::Sass::Compiler)
-end
-
 module SassC
   class Engine
     def render
@@ -19,9 +15,7 @@ module SassC
 
       base_importer = import_handler.setup(nil)
 
-      sass = ::Sass::Compiler.new
-
-      result = sass.compile_string(
+      result = ::Sass.compile_string(
         @template,
         importer: base_importer,
         load_paths: load_paths,
@@ -70,8 +64,6 @@ module SassC
                URL.file_urls_to_relative_path(url, URL.path_to_file_url("#{Dir.pwd}/"))
              end
       raise SyntaxError.new(e.full_message, filename: path, line: line)
-    ensure
-      sass&.close
     end
 
     def dependencies
