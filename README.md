@@ -9,7 +9,7 @@ This library shims [`sassc`](https://github.com/sass/sassc-ruby) with the [`sass
 
 ## Which Sass implementation should I use for my Ruby project?
 
-- [`sass-embedded`](https://github.com/sass-contrib/sass-embedded-host-ruby) is recommended for new projects. It is compatible with:
+- [`sass-embedded`](https://github.com/sass-contrib/sass-embedded-host-ruby) is recommended for all projects. It is compatible with:
   - [`dartsass-rails >=0.5.0`](https://github.com/rails/dartsass-rails)
   - [`haml >=6.0.9`](https://github.com/haml/haml)
   - [`silm >=5.2.0`](https://github.com/slim-template/slim)
