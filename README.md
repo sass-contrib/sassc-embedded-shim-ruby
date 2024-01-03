@@ -9,21 +9,20 @@ This library shims [`sassc`](https://github.com/sass/sassc-ruby) with the [`sass
 
 ## Which Sass implementation should I use for my Ruby project?
 
-[`sass-embedded`](https://github.com/sass-contrib/sass-embedded-host-ruby) is recommended for new projects. It is compatible with:
-
-- [`dartsass-rails >=0.5.0`](https://github.com/rails/dartsass-rails)
-- [`haml >=6.0.9`](https://github.com/haml/haml)
-- [`silm >=5.2.0`](https://github.com/slim-template/slim)
-- [`sinatra >=3.1.0`](https://github.com/sinatra/sinatra)
-- [`tilt >=2.0.11`](https://github.com/jeremyevans/tilt)
-
-[`sassc-embedded`](https://github.com/sass-contrib/sassc-embedded-shim-ruby) is recommended for existing projects that depends on `sassc` or `sprockets`. It is compatible with:
-
-- [`dartsass-sprockets`](https://github.com/tablecheck/dartsass-sprockets)
-- [`sassc`](https://github.com/sass/sassc-ruby)
-- [`sassc-rails`](https://github.com/sass/sassc-rails)
-- [`sprockets`](https://github.com/rails/sprockets)
-- [`sprockets-rails`](https://github.com/rails/sprockets-rails)
+- [`sass-embedded`](https://github.com/sass-contrib/sass-embedded-host-ruby) is recommended for new projects. It is compatible with:
+  - [`dartsass-rails >=0.5.0`](https://github.com/rails/dartsass-rails)
+  - [`haml >=6.0.9`](https://github.com/haml/haml)
+  - [`silm >=5.2.0`](https://github.com/slim-template/slim)
+  - [`sinatra >=3.1.0`](https://github.com/sinatra/sinatra)
+  - [`tilt >=2.0.11`](https://github.com/jeremyevans/tilt)
+- [`sassc-embedded`](https://github.com/sass-contrib/sassc-embedded-shim-ruby) is recommended for existing projects still using `sassc` or `sprockets`. It is compatible with:
+  - [`dartsass-sprockets`](https://github.com/tablecheck/dartsass-sprockets)
+  - [`sassc`](https://github.com/sass/sassc-ruby)
+  - [`sassc-rails`](https://github.com/sass/sassc-rails)
+  - [`sprockets`](https://github.com/rails/sprockets)
+  - [`sprockets-rails`](https://github.com/rails/sprockets-rails)
+- [`sassc`](https://github.com/sass/sassc-ruby) [is deprecated](https://sass-lang.com/blog/libsass-is-deprecated/).
+- [`sass`](https://github.com/sass/ruby-sass) [has reached end-of-life](https://sass-lang.com/blog/ruby-sass-is-unsupported/).
 
 ## Install
 
