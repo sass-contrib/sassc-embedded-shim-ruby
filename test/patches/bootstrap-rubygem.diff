@@ -20,6 +20,15 @@ index a9b7f23..6248918 100644
 +
 +gem 'sassc', github: 'sass/sassc-ruby', ref: 'refs/pull/233/head'
 +gem 'sassc-embedded', path: '../../../../../..'
+diff --git a/test/gemfiles/rails_7_0_dartsass.gemfile b/test/gemfiles/rails_7_0_dartsass.gemfile
+index 8e38137..44c7ae9 100644
+--- a/test/gemfiles/rails_7_0_dartsass.gemfile
++++ b/test/gemfiles/rails_7_0_dartsass.gemfile
+@@ -6,3 +6,4 @@ gem 'autoprefixer-rails', '>= 9.7.6'
+ gem 'dartsass-sprockets', '~> 3.0'
+ 
+ gemspec path: '../../'
++gem 'sassc-embedded', path: '../../../../../..'
 diff --git a/test/gemfiles/rails_7_0_sassc.gemfile b/test/gemfiles/rails_7_0_sassc.gemfile
 index 28a4d05..40fd1a6 100644
 --- a/test/gemfiles/rails_7_0_sassc.gemfile

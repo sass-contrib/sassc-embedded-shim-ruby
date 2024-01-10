@@ -71,6 +71,7 @@ namespace :git do
               test/gemfiles/rails_6_0.gemfile
               test/gemfiles/rails_6_1.gemfile
               test/gemfiles/rails_7_0_sassc.gemfile
+              test/gemfiles/rails_7_0_dartsass.gemfile
             ]
             gemfiles.each do |gemfile|
               env = { 'BUNDLE_GEMFILE' => gemfile }
