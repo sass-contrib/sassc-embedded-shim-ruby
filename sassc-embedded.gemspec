@@ -12,6 +12,7 @@ Gem::Specification.new do |spec|
   spec.homepage      = 'https://github.com/sass-contrib/sassc-embedded-shim-ruby'
   spec.license       = 'MIT'
   spec.metadata      = {
+    'bug_tracker_uri' => "#{spec.homepage}/issues",
     'documentation_uri' => 'https://rubydoc.info/gems/sassc',
     'source_code_uri' => "#{spec.homepage}/tree/v#{spec.version}",
     'funding_uri' => 'https://github.com/sponsors/ntkme',
@@ -28,5 +29,5 @@ Gem::Specification.new do |spec|
 
   spec.required_ruby_version = '>= 3.1.0'
 
-  spec.add_runtime_dependency 'sass-embedded', '~> 1.69'
+  spec.add_runtime_dependency 'sass-embedded', '~> 1.70'
 end
