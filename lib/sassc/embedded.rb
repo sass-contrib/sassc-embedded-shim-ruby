@@ -425,6 +425,27 @@ module SassC
   end
 
   module Script
+    class Value
+      class String
+        # Returns the quoted string representation of `contents`.
+        #
+        # @options opts :quote [String]
+        #   The preferred quote style for quoted strings. If `:none`, strings are
+        #   always emitted unquoted. If `nil`, quoting is determined automatically.
+        # @options opts :sass [String]
+        #   Whether to quote strings for Sass source, as opposed to CSS. Defaults to `false`.
+        def self.quote(contents, opts = {})
+          contents = ::Sass::Value::String.new(contents, quoted: opts[:quote] != :none).to_s
+          opts[:sass] ? contents.gsub('#', '\#') : contents
+        end
+
+        def to_s(opts = {})
+          opts = { quote: :none }.merge!(opts) if @type == :identifier
+          self.class.quote(@value, opts)
+        end
+      end
+    end
+
     module ValueConversion
       def self.from_native(value, options)
         case value
