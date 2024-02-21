@@ -180,27 +180,6 @@ module SassC
         Script::ValueConversion.from_native(native_value, @options)
       end
     end
-
-    begin
-      begin
-        raise RuntimeError
-      rescue StandardError
-        raise ::Sass::ScriptError
-      end
-    rescue StandardError => e
-      unless e.full_message.include?(e.cause.full_message)
-        ::Sass::ScriptError.class_eval do
-          def full_message(...)
-            full_message = super(...)
-            if cause
-              "#{full_message}\n#{cause.full_message(...)}"
-            else
-              full_message
-            end
-          end
-        end
-      end
-    end
   end
 
   class ImportHandler
