@@ -13,11 +13,11 @@ module SassC
     def render
       return @template.dup if @template.empty?
 
-      base_importer = import_handler.setup(nil)
+      importers = import_handler.setup(nil)
 
       result = ::Sass.compile_string(
         @template,
-        importer: base_importer,
+        importer: importers.first,
         load_paths:,
         syntax:,
         url: file_url,
@@ -28,7 +28,7 @@ module SassC
         style: output_style,
 
         functions: functions_handler.setup(nil, functions: @functions),
-        importers: (base_importer.nil? ? [] : [base_importer]).concat(@options.fetch(:importers, [])),
+        importers: importers.concat(@options.fetch(:importers, [])),
 
         alert_ascii: @options.fetch(:alert_ascii, false),
         alert_color: @options.fetch(:alert_color, nil),
@@ -184,8 +184,41 @@ module SassC
 
   class ImportHandler
     def setup(_native_options)
-      Importer.new(@importer) if @importer
+      if @importer
+        import_cache = ImportCache.new(@importer)
+        [Importer.new(import_cache), FileImporter.new(import_cache)]
+      else
+        []
+      end
     end
+
+    class Importer
+      def initialize(import_cache)
+        @import_cache = import_cache
+      end
+
+      def canonicalize(...)
+        @import_cache.canonicalize(...)
+      end
+
+      def load(...)
+        @import_cache.load(...)
+      end
+    end
+
+    private_constant :Importer
+
+    class FileImporter
+      def initialize(import_cache)
+        @import_cache = import_cache
+      end
+
+      def find_file_url(...)
+        @import_cache.find_file_url(...)
+      end
+    end
+
+    private_constant :FileImporter
 
     class FileSystemImporter
       class << self
@@ -269,27 +302,39 @@ module SassC
 
     private_constant :FileSystemImporter
 
-    class Importer
+    class ImportCache
       def initialize(importer)
         @importer = importer
-
         @canonical_urls = {}
-        @id = 0
         @importer_results = {}
+        @load_paths = (@importer.options[:load_paths] || []) + SassC.load_paths
         @parent_urls = [URL.path_to_file_url(File.absolute_path(@importer.options[:filename] || 'stdin'))]
       end
 
       def canonicalize(url, context)
         if url.start_with?(Protocol::IMPORT)
-          canonical_url = @canonical_urls.delete(url.delete_prefix(Protocol::IMPORT))
+          canonical_url = @canonical_urls.delete(url)
           unless @importer_results.key?(canonical_url)
             canonical_url = resolve_file_url(canonical_url, @parent_urls.last, context.from_import)
+            return unless canonical_url
+
+            if ['.sass', '.scss', '.css'].include?(File.extname(URL.file_url_to_path(canonical_url)))
+              @canonical_urls[url] = canonical_url
+              return nil
+            end
           end
           @parent_urls.push(canonical_url)
           canonical_url
-        elsif url.start_with?(Protocol::FILE)
-          path = URL.file_urls_to_relative_path(url, @parent_urls.last)
-          parent_path = URL.file_url_to_path(@parent_urls.last)
+        elsif url.start_with?(Protocol::LOADED)
+          @parent_urls.pop
+          Protocol::LOADED
+        else
+          parent_url = @parent_urls.last
+          url = URL.join(parent_url, url)
+          return unless url.start_with?(Protocol::FILE)
+
+          path = URL.file_urls_to_relative_path(url, parent_url)
+          parent_path = URL.file_url_to_path(parent_url)
 
           imports = @importer.imports(path, parent_path)
           imports = [SassC::Importer::Import.new(path)] if imports.nil?
@@ -298,12 +343,8 @@ module SassC
             import.path = File.absolute_path(import.path, File.dirname(parent_path))
           end
 
-          canonical_url = "#{Protocol::IMPORT}#{next_id}"
+          canonical_url = "#{Protocol::IMPORT}#{url}"
           @importer_results[canonical_url] = imports_to_native(imports, context.from_import)
-          canonical_url
-        elsif url.start_with?(Protocol::LOADED)
-          canonical_url = Protocol::LOADED
-          @parent_urls.pop
           canonical_url
         end
       end
@@ -326,16 +367,20 @@ module SassC
         end
       end
 
-      private
+      def find_file_url(url, _context)
+        canonical_url = @canonical_urls.delete(url)
+        return unless canonical_url
 
-      def load_paths
-        @load_paths ||= (@importer.options[:load_paths] || []) + SassC.load_paths
+        @parent_urls.push(canonical_url)
+        canonical_url
       end
+
+      private
 
       def resolve_file_url(url, parent_url, from_import)
         path = URL.file_urls_to_relative_path(url, parent_url)
         parent_path = URL.file_url_to_path(parent_url)
-        [File.dirname(parent_path)].concat(load_paths).each do |load_path|
+        [File.dirname(parent_path)].concat(@load_paths).each do |load_path|
           resolved = FileSystemImporter.resolve_path(File.absolute_path(path, load_path), from_import)
           return URL.path_to_file_url(resolved) unless resolved.nil?
         end
@@ -356,9 +401,10 @@ module SassC
       def imports_to_native(imports, from_import)
         {
           contents: imports.flat_map do |import|
-            id = next_id
             canonical_url = URL.path_to_file_url(import.path)
-            @canonical_urls[id] = canonical_url
+            import_url = "#{Protocol::IMPORT}#{canonical_url}"
+            loaded_url = "#{Protocol::LOADED}#{canonical_url}"
+            @canonical_urls[import_url] = canonical_url
             if import.source
               @importer_results[canonical_url] = if import.source.is_a?(Hash)
                                                    {
@@ -375,23 +421,17 @@ module SassC
                                                  end
             end
             at_rule = from_import ? '@import' : '@forward'
-            [
-              "#{at_rule} \"#{Protocol::IMPORT}#{id}\";",
-              "#{at_rule} \"#{Protocol::LOADED}#{id}\";"
-            ]
+            <<~SCSS
+              #{at_rule} #{Script::Value::String.quote(import_url)};
+              #{at_rule} #{Script::Value::String.quote(loaded_url)};
+            SCSS
           end.join("\n"),
           syntax: :scss
         }
       end
-
-      def next_id
-        id = @id
-        @id = id.next
-        id.to_s
-      end
     end
 
-    private_constant :Importer
+    private_constant :ImportCache
   end
 
   class Sass2Scss
@@ -555,6 +595,10 @@ module SassC
     private_constant :PARSER
 
     module_function
+
+    def join(...)
+      URI.join(...).to_s
+    end
 
     def parse(str)
       PARSER.parse(str)
