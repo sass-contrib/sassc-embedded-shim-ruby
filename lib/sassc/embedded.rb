@@ -187,7 +187,7 @@ module SassC
       Importer.new(@importer) if @importer
     end
 
-    class FileImporter
+    class FileSystemImporter
       class << self
         def resolve_path(path, from_import)
           ext = File.extname(path)
@@ -267,7 +267,7 @@ module SassC
       end
     end
 
-    private_constant :FileImporter
+    private_constant :FileSystemImporter
 
     class Importer
       def initialize(importer)
@@ -336,7 +336,7 @@ module SassC
         path = URL.file_urls_to_relative_path(url, parent_url)
         parent_path = URL.file_url_to_path(parent_url)
         [File.dirname(parent_path)].concat(load_paths).each do |load_path|
-          resolved = FileImporter.resolve_path(File.absolute_path(path, load_path), from_import)
+          resolved = FileSystemImporter.resolve_path(File.absolute_path(path, load_path), from_import)
           return URL.path_to_file_url(resolved) unless resolved.nil?
         end
         nil
