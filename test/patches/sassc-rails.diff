@@ -125,6 +125,10 @@ index 38349f7..34a4eb9 100644
 +  spec.add_dependency 'sprockets', '~> 4.2'
 +  spec.add_dependency 'sprockets-rails', '~> 3.4'
  end
+diff --git a/test/dummy/app/assets/stylesheets/partials/_explicit_extension_import.foo b/test/dummy/app/assets/stylesheets/partials/_explicit_extension_import.foo.scss
+similarity index 100%
+rename from test/dummy/app/assets/stylesheets/partials/_explicit_extension_import.foo
+rename to test/dummy/app/assets/stylesheets/partials/_explicit_extension_import.foo.scss
 diff --git a/test/sassc_rails_test.rb b/test/sassc_rails_test.rb
 index a15110d..452a251 100644
 --- a/test/sassc_rails_test.rb
