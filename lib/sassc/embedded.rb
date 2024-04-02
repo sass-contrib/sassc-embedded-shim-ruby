@@ -235,10 +235,10 @@ module SassC
           unless ext.empty?
             if from_import
               result = exactly_one(try_path("#{without_ext(path)}.import#{ext}"))
-              return result unless result.nil?
+              return warn_deprecation_ext(result) unless result.nil?
             end
             result = exactly_one(try_path(path))
-            return result unless result.nil?
+            return warn_deprecation_ext(result) unless result.nil?
           end
 
           if from_import
@@ -296,6 +296,21 @@ module SassC
         def without_ext(path)
           ext = File.extname(path)
           path.delete_suffix(ext)
+        end
+
+        def warn_deprecation_ext(path)
+          basename = File.basename(path)
+          warn <<~WARNING
+            Deprecation Warning: Importing files with extensions other than `.scss`, `.sass`, `.css` from relative path or load paths without custom SassC::Importer is deprecated.
+
+            Recommandation: Rename #{basename} to #{basename}.scss
+
+            More info: https://github.com/sass-contrib/sassc-embedded-shim-ruby/pull/86
+
+            #{path}
+            #{' ' * (path.length - basename.length)}#{'^' * basename.length}
+          WARNING
+          path
         end
       end
     end
