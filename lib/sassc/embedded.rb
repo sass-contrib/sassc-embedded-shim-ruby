@@ -330,7 +330,9 @@ module SassC
         if url.start_with?(Protocol::IMPORT)
           canonical_url = @canonical_urls.delete(url)
           unless @importer_results.key?(canonical_url)
-            canonical_url = resolve_file_url(canonical_url, @parent_urls.last, context.from_import)
+            path = URL.unescape(canonical_url)
+            parent_path = URL.file_url_to_path(@parent_urls.last)
+            canonical_url = resolve_file_url(path, parent_path, context.from_import)
             return unless canonical_url
 
             if ['.sass', '.scss', '.css'].include?(File.extname(URL.file_url_to_path(canonical_url)))
@@ -354,12 +356,9 @@ module SassC
           imports = @importer.imports(path, parent_path)
           imports = [SassC::Importer::Import.new(path)] if imports.nil?
           imports = [imports] unless imports.is_a?(Array)
-          imports.each do |import|
-            import.path = File.absolute_path(import.path, File.dirname(parent_path))
-          end
 
           canonical_url = "#{Protocol::IMPORT}#{url}"
-          @importer_results[canonical_url] = imports_to_native(imports, context.from_import)
+          @importer_results[canonical_url] = imports_to_native(imports, File.dirname(parent_path), context.from_import)
           canonical_url
         end
       end
@@ -392,9 +391,7 @@ module SassC
 
       private
 
-      def resolve_file_url(url, parent_url, from_import)
-        path = URL.file_urls_to_relative_path(url, parent_url)
-        parent_path = URL.file_url_to_path(parent_url)
+      def resolve_file_url(path, parent_path, from_import)
         [File.dirname(parent_path)].concat(@load_paths).each do |load_path|
           resolved = FileSystemImporter.resolve_path(File.absolute_path(path, load_path), from_import)
           return URL.path_to_file_url(resolved) unless resolved.nil?
@@ -413,14 +410,11 @@ module SassC
         end
       end
 
-      def imports_to_native(imports, from_import)
+      def imports_to_native(imports, parent_dir, from_import)
         {
           contents: imports.flat_map do |import|
-            canonical_url = URL.path_to_file_url(import.path)
-            import_url = "#{Protocol::IMPORT}#{canonical_url}"
-            loaded_url = "#{Protocol::LOADED}#{canonical_url}"
-            @canonical_urls[import_url] = canonical_url
             if import.source
+              canonical_url = URL.path_to_file_url(File.absolute_path(import.path, parent_dir))
               @importer_results[canonical_url] = if import.source.is_a?(Hash)
                                                    {
                                                      contents: import.source[:contents],
@@ -434,7 +428,12 @@ module SassC
                                                      source_map_url: canonical_url
                                                    }
                                                  end
+            else
+              canonical_url = URL.escape(import.path)
             end
+            import_url = "#{Protocol::IMPORT}#{canonical_url}"
+            loaded_url = "#{Protocol::LOADED}#{canonical_url}"
+            @canonical_urls[import_url] = canonical_url
             at_rule = from_import ? '@import' : '@forward'
             <<~SCSS
               #{at_rule} #{Script::Value::String.quote(import_url)};
