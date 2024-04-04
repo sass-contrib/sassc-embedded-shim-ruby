@@ -268,7 +268,7 @@ module SassC
         end
 
         def try_path_as_dir(path, from_import)
-          return unless dir_exist? path
+          return unless dir_exist?(path)
 
           if from_import
             result = exactly_one(try_path_with_ext(File.join(path, 'index.import')))
@@ -280,7 +280,7 @@ module SassC
 
         def exactly_one(paths)
           return if paths.empty?
-          return paths.first if paths.length == 1
+          return paths.first if paths.one?
 
           raise "It's not clear which file to import. Found:\n#{paths.map { |path| "  #{path}" }.join("\n")}"
         end
