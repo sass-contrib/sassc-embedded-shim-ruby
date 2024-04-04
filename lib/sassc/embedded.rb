@@ -28,7 +28,7 @@ module SassC
         style: output_style,
 
         functions: functions_handler.setup(nil, functions: @functions),
-        importers: importers.concat(@options.fetch(:importers, [])),
+        importers: @options.fetch(:importers, []).concat(importers),
 
         alert_ascii: @options.fetch(:alert_ascii, false),
         alert_color: @options.fetch(:alert_color, nil),
@@ -329,13 +329,11 @@ module SassC
             return
           end
           @parent_urls.push(canonical_url)
-          canonical_url
         elsif url.start_with?(Protocol::LOADED)
           canonical_url = Protocol::LOADED
           @importer_results[canonical_url] = { contents: '', syntax: :scss }
           @parent_urls.pop
-          canonical_url
-        elsif !/^[A-Za-z][A-Za-z0-9+.-]+:/.match?(url)
+        else
           path = URL.unescape(url)
           parent_path = URL.file_url_to_path(@parent_urls.last)
 
@@ -345,8 +343,8 @@ module SassC
 
           canonical_url = "#{Protocol::IMPORT}#{next_id}"
           @importer_results[canonical_url] = imports_to_native(imports, File.dirname(parent_path), context.from_import)
-          canonical_url
         end
+        canonical_url
       end
 
       def load(canonical_url)
