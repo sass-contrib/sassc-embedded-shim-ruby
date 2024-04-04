@@ -235,15 +235,6 @@ module SassC
             return exactly_one(try_path(path))
           end
 
-          unless ext.empty?
-            if from_import
-              result = exactly_one(try_path("#{without_ext(path)}.import#{ext}"))
-              return warn_deprecation_ext(result) unless result.nil?
-            end
-            result = exactly_one(try_path(path))
-            return warn_deprecation_ext(result) unless result.nil?
-          end
-
           if from_import
             result = exactly_one(try_path_with_ext("#{path}.import"))
             return result unless result.nil?
@@ -300,21 +291,6 @@ module SassC
           ext = File.extname(path)
           path.delete_suffix(ext)
         end
-
-        def warn_deprecation_ext(path)
-          basename = File.basename(path)
-          warn <<~WARNING
-            Deprecation Warning: Importing files with extensions other than `.scss`, `.sass`, `.css` from relative path or load paths without custom SassC::Importer is deprecated.
-
-            Recommandation: Rename #{basename} to #{basename}.scss
-
-            More info: https://github.com/sass-contrib/sassc-embedded-shim-ruby/pull/86
-
-            #{path}
-            #{' ' * (path.length - basename.length)}#{'^' * basename.length}
-          WARNING
-          path
-        end
       end
     end
 
@@ -342,10 +318,10 @@ module SassC
             # Temporarily disable FileImporter optimization
             # https://github.com/sass/dart-sass/issues/2208
             #
-            # if ['.sass', '.scss', '.css'].include?(File.extname(URL.file_url_to_path(canonical_url)))
-            #   @canonical_urls[url] = canonical_url
-            #   return nil
-            # end
+            # @canonical_urls[url] = canonical_url
+            # return nil
+            @canonical_urls[url] = canonical_url
+            return
           end
           @parent_urls.push(canonical_url)
           canonical_url
