@@ -414,12 +414,13 @@ module SassC
             else
               canonical_url = URL.escape(import.path)
             end
-            import_url = "#{Protocol::IMPORT}#{next_id}"
-            loaded_url = "#{Protocol::LOADED}#{next_id}"
+            id = next_id
+            import_url = "#{Protocol::IMPORT}#{id}"
+            loaded_url = "#{Protocol::LOADED}#{id}"
             @canonical_urls[import_url] = canonical_url
             at_rule = from_import ? '@import' : '@forward'
             <<~SCSS
-              #{at_rule} #{Script::Value::String.quote(import_url)};
+              #{at_rule} #{Script::Value::String.quote(import_url)}; // #{Script::Value::String.quote(canonical_url)}
               #{at_rule} #{Script::Value::String.quote(loaded_url)};
             SCSS
           end.join("\n"),
