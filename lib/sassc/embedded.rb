@@ -17,7 +17,7 @@ module SassC
 
       result = ::Sass.compile_string(
         @template,
-        importer: importers.first,
+        importer: (NoopImporter unless importers.empty?),
         load_paths:,
         syntax:,
         url: file_url,
@@ -185,6 +185,16 @@ module SassC
     end
   end
 
+  module NoopImporter
+    module_function
+
+    def canonicalize(...); end
+
+    def load(...); end
+  end
+
+  private_constant :NoopImporter
+
   class ImportHandler
     def setup(_native_options)
       if @importer
@@ -315,26 +325,19 @@ module SassC
             canonical_url = resolve_file_url(path, parent_path, context.from_import)
             return unless canonical_url
 
-            # Temporarily disable FileImporter optimization
-            # https://github.com/sass/dart-sass/issues/2208
-            #
-            # @canonical_urls[url] = canonical_url
-            # return nil
             @canonical_urls[url] = canonical_url
             return
           end
           @parent_urls.push(canonical_url)
           canonical_url
         elsif url.start_with?(Protocol::LOADED)
+          canonical_url = Protocol::LOADED
+          @importer_results[canonical_url] = { contents: '', syntax: :scss }
           @parent_urls.pop
-          Protocol::LOADED
-        else
-          parent_url = @parent_urls.last
-          url = URL.join(parent_url, url)
-          return unless url.start_with?(Protocol::FILE)
-
-          path = URL.file_urls_to_relative_path(url, parent_url)
-          parent_path = URL.file_url_to_path(parent_url)
+          canonical_url
+        elsif !/^[A-Za-z][A-Za-z0-9+.-]+:/.match?(url)
+          path = URL.unescape(url)
+          parent_path = URL.file_url_to_path(@parent_urls.last)
 
           imports = @importer.imports(path, parent_path)
           imports = [SassC::Importer::Import.new(path)] if imports.nil?
@@ -347,21 +350,7 @@ module SassC
       end
 
       def load(canonical_url)
-        if @importer_results.key?(canonical_url)
-          @importer_results.delete(canonical_url)
-        elsif canonical_url.start_with?(Protocol::FILE)
-          path = URL.file_url_to_path(canonical_url)
-          {
-            contents: File.read(path),
-            syntax: syntax(path),
-            source_map_url: canonical_url
-          }
-        elsif canonical_url.start_with?(Protocol::LOADED)
-          {
-            contents: '',
-            syntax: :scss
-          }
-        end
+        @importer_results.delete(canonical_url)
       end
 
       def find_file_url(url, _context)
