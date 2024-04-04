@@ -67,6 +67,26 @@ module SassC
       CSS
     end
 
+    def test_custom_importer_works_for_file_in_parent_dir
+      temp_dir('sub')
+      temp_file('a.scss', 'a {b: c}')
+      temp_file('sub/b.scss', '@import "../a"')
+
+      data = <<~SCSS
+        @import "sub/b.scss";
+      SCSS
+
+      engine = Engine.new(data, {
+                            importer: CustomImporter
+                          })
+
+      assert_equal <<~CSS, engine.render
+        a {
+          b: c;
+        }
+      CSS
+    end
+
     def test_dependency_list
       base = Dir.pwd
 
