@@ -340,7 +340,7 @@ module SassC
           imports = [SassC::Importer::Import.new(path)] if imports.nil?
           imports = [imports] unless imports.is_a?(Array)
 
-          canonical_url = "#{Protocol::IMPORT}#{url}"
+          canonical_url = "#{Protocol::IMPORT}#{next_id}"
           @importer_results[canonical_url] = imports_to_native(imports, File.dirname(parent_path), context.from_import)
           canonical_url
         end
