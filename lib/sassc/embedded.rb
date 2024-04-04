@@ -338,10 +338,13 @@ module SassC
             canonical_url = resolve_file_url(path, parent_path, context.from_import)
             return unless canonical_url
 
-            if ['.sass', '.scss', '.css'].include?(File.extname(URL.file_url_to_path(canonical_url)))
-              @canonical_urls[url] = canonical_url
-              return nil
-            end
+            # Temporarily disable FileImporter optimization
+            # https://github.com/sass/dart-sass/issues/2208
+            #
+            # if ['.sass', '.scss', '.css'].include?(File.extname(URL.file_url_to_path(canonical_url)))
+            #   @canonical_urls[url] = canonical_url
+            #   return nil
+            # end
           end
           @parent_urls.push(canonical_url)
           canonical_url
