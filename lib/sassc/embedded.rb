@@ -324,6 +324,7 @@ module SassC
       def initialize(importer)
         @importer = importer
         @canonical_urls = {}
+        @id = 0
         @importer_results = {}
         @load_paths = (@importer.options[:load_paths] || []) + SassC.load_paths
         @parent_urls = [URL.path_to_file_url(File.absolute_path(@importer.options[:filename] || 'stdin'))]
@@ -437,8 +438,8 @@ module SassC
             else
               canonical_url = URL.escape(import.path)
             end
-            import_url = "#{Protocol::IMPORT}#{canonical_url}"
-            loaded_url = "#{Protocol::LOADED}#{canonical_url}"
+            import_url = "#{Protocol::IMPORT}#{next_id}"
+            loaded_url = "#{Protocol::LOADED}#{next_id}"
             @canonical_urls[import_url] = canonical_url
             at_rule = from_import ? '@import' : '@forward'
             <<~SCSS
@@ -448,6 +449,12 @@ module SassC
           end.join("\n"),
           syntax: :scss
         }
+      end
+
+      def next_id
+        id = @id
+        @id = id.next
+        id
       end
     end
 
