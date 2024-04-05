@@ -13,11 +13,9 @@ module SassC
     def render
       return @template.dup if @template.empty?
 
-      importers = import_handler.setup(nil)
-
       result = ::Sass.compile_string(
         @template,
-        importer: (NoopImporter unless importers.empty?),
+        importer: (NoopImporter unless @options[:importer].nil?),
         load_paths:,
         syntax:,
         url: file_url,
@@ -28,7 +26,7 @@ module SassC
         style: output_style,
 
         functions: functions_handler.setup(nil, functions: @functions),
-        importers: @options.fetch(:importers, []).concat(importers),
+        importers: import_handler.setup(nil).concat(@options.fetch(:importers, [])),
 
         alert_ascii: @options.fetch(:alert_ascii, false),
         alert_color: @options.fetch(:alert_color, nil),
@@ -309,60 +307,64 @@ module SassC
     class ImportCache
       def initialize(importer)
         @importer = importer
-        @canonical_urls = {}
-        @id = 0
         @importer_results = {}
+        @file_url = nil
         @load_paths = (@importer.options[:load_paths] || []) + SassC.load_paths
-        @parent_urls = [URL.path_to_file_url(File.absolute_path(@importer.options[:filename] || 'stdin'))]
       end
 
       def canonicalize(url, context)
-        if url.start_with?(Protocol::IMPORT)
-          canonical_url = @canonical_urls.delete(url)
-          unless @importer_results.key?(canonical_url)
-            path = URL.unescape(canonical_url)
-            parent_path = URL.file_url_to_path(@parent_urls.last)
-            canonical_url = resolve_file_url(path, parent_path, context.from_import)
-            return unless canonical_url
+        return if context.containing_url.nil?
 
-            @canonical_urls[url] = canonical_url
-            return
-          end
-          @parent_urls.push(canonical_url)
-        elsif url.start_with?(Protocol::LOADED)
-          canonical_url = Protocol::LOADED
-          @importer_results[canonical_url] = { contents: '', syntax: :scss }
-          @parent_urls.pop
-        else
-          path = URL.unescape(url)
-          parent_path = URL.file_url_to_path(@parent_urls.last)
+        containing_url = if context.containing_url.start_with?(Protocol::GLOB)
+                           URL.unescape(URL.parse(context.containing_url).fragment)
+                         else
+                           context.containing_url
+                         end
 
+        return unless containing_url.start_with?(Protocol::FILE)
+
+        path = URL.unescape(url)
+        parent_path = URL.file_url_to_path(containing_url)
+        parent_dir = File.dirname(parent_path)
+
+        if containing_url == context.containing_url
           imports = @importer.imports(path, parent_path)
           imports = [SassC::Importer::Import.new(path)] if imports.nil?
           imports = [imports] unless imports.is_a?(Array)
-
-          canonical_url = "#{Protocol::IMPORT}#{next_id}"
-          @importer_results[canonical_url] = imports_to_native(imports, File.dirname(parent_path), context.from_import)
+          canonical_url = imports_to_native(imports, parent_dir, context.from_import, url, context.containing_url)
+          if @importer_results.key?(canonical_url)
+            canonical_url
+          else
+            @file_url = canonical_url
+            nil
+          end
+        else
+          canonical_url = URL.path_to_file_url(File.absolute_path(path, parent_dir))
+          if @importer_results.key?(canonical_url)
+            canonical_url
+          else
+            @file_url = resolve_file_url(path, parent_dir, context.from_import)
+            nil
+          end
         end
-        canonical_url
       end
 
       def load(canonical_url)
         @importer_results.delete(canonical_url)
       end
 
-      def find_file_url(url, _context)
-        canonical_url = @canonical_urls.delete(url)
-        return unless canonical_url
+      def find_file_url(_url, _context)
+        return if @file_url.nil?
 
-        @parent_urls.push(canonical_url)
+        canonical_url = @file_url
+        @file_url = nil
         canonical_url
       end
 
       private
 
-      def resolve_file_url(path, parent_path, from_import)
-        [File.dirname(parent_path)].concat(@load_paths).each do |load_path|
+      def resolve_file_url(path, parent_dir, from_import)
+        [parent_dir].concat(@load_paths).each do |load_path|
           resolved = FileSystemImporter.resolve_path(File.absolute_path(path, load_path), from_import)
           return URL.path_to_file_url(resolved) unless resolved.nil?
         end
@@ -380,45 +382,44 @@ module SassC
         end
       end
 
-      def imports_to_native(imports, parent_dir, from_import)
-        {
+      def import_to_native(import, parent_dir, from_import, canonicalize)
+        if import.source
+          canonical_url = URL.path_to_file_url(File.absolute_path(import.path, parent_dir))
+          @importer_results[canonical_url] = if import.source.is_a?(Hash)
+                                               {
+                                                 contents: import.source[:contents],
+                                                 syntax: import.source[:syntax],
+                                                 source_map_url: canonical_url
+                                               }
+                                             else
+                                               {
+                                                 contents: import.source,
+                                                 syntax: syntax(import.path),
+                                                 source_map_url: canonical_url
+                                               }
+                                             end
+          return canonical_url if canonicalize
+        elsif canonicalize
+          return resolve_file_url(import.path, parent_dir, from_import)
+        end
+
+        URL.escape(import.path)
+      end
+
+      def imports_to_native(imports, parent_dir, from_import, url, containing_url)
+        return import_to_native(imports.first, parent_dir, from_import, true) if imports.one?
+
+        canonical_url = "#{Protocol::GLOB}?#{URL.escape(url)}##{URL.escape(containing_url)}"
+        @importer_results[canonical_url] = {
           contents: imports.flat_map do |import|
-            if import.source
-              canonical_url = URL.path_to_file_url(File.absolute_path(import.path, parent_dir))
-              @importer_results[canonical_url] = if import.source.is_a?(Hash)
-                                                   {
-                                                     contents: import.source[:contents],
-                                                     syntax: import.source[:syntax],
-                                                     source_map_url: canonical_url
-                                                   }
-                                                 else
-                                                   {
-                                                     contents: import.source,
-                                                     syntax: syntax(import.path),
-                                                     source_map_url: canonical_url
-                                                   }
-                                                 end
-            else
-              canonical_url = URL.escape(import.path)
-            end
-            id = next_id
-            import_url = "#{Protocol::IMPORT}#{id}"
-            loaded_url = "#{Protocol::LOADED}#{id}"
-            @canonical_urls[import_url] = canonical_url
             at_rule = from_import ? '@import' : '@forward'
-            <<~SCSS
-              #{at_rule} #{Script::Value::String.quote(import_url)}; // #{Script::Value::String.quote(canonical_url)}
-              #{at_rule} #{Script::Value::String.quote(loaded_url)};
-            SCSS
+            url = import_to_native(import, parent_dir, from_import, false)
+            "#{at_rule} #{Script::Value::String.quote(url)};"
           end.join("\n"),
           syntax: :scss
         }
-      end
 
-      def next_id
-        id = @id
-        @id = id.next
-        id
+        canonical_url
       end
     end
 
@@ -574,8 +575,7 @@ module SassC
 
   module Protocol
     FILE = 'file:'
-    IMPORT = 'sassc-embedded-import:'
-    LOADED = 'sassc-embedded-loaded:'
+    GLOB = 'sassc-embedded-glob:'
   end
 
   private_constant :Protocol
