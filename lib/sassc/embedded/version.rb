@@ -2,6 +2,6 @@
 
 module SassC
   module Embedded
-    VERSION = '1.75.1'
+    VERSION = '1.75.2'
   end
 end
