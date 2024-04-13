@@ -353,8 +353,8 @@ module SassC
         @importer_results.delete(canonical_url)
       end
 
-      def find_file_url(_url, _context)
-        return if @file_url.nil?
+      def find_file_url(_url, context)
+        return if context.containing_url.nil? || @file_url.nil?
 
         canonical_url = @file_url
         @file_url = nil
