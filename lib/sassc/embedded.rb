@@ -135,11 +135,7 @@ module SassC
     end
 
     def load_paths
-      @load_paths ||= if @options[:importer].nil?
-                        (@options[:load_paths] || []) + SassC.load_paths
-                      else
-                        []
-                      end
+      @load_paths ||= (@options[:load_paths] || []) + SassC.load_paths
     end
   end
 
@@ -309,7 +305,6 @@ module SassC
         @importer = importer
         @importer_results = {}
         @file_url = nil
-        @load_paths = (@importer.options[:load_paths] || []) + SassC.load_paths
       end
 
       def canonicalize(url, context)
@@ -364,11 +359,8 @@ module SassC
       private
 
       def resolve_file_url(path, parent_dir, from_import)
-        [parent_dir].concat(@load_paths).each do |load_path|
-          resolved = FileSystemImporter.resolve_path(File.absolute_path(path, load_path), from_import)
-          return URL.path_to_file_url(resolved) unless resolved.nil?
-        end
-        nil
+        resolved = FileSystemImporter.resolve_path(File.absolute_path(path, parent_dir), from_import)
+        URL.path_to_file_url(resolved) unless resolved.nil?
       end
 
       def syntax(path)
