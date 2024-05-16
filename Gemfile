@@ -5,7 +5,7 @@ source 'https://rubygems.org'
 gemspec
 
 group :development do
-  gem 'minitest', '~> 5.22.0'
+  gem 'minitest', '~> 5.23.0'
   gem 'minitest-around', '~> 0.5.0'
   gem 'rake', '>= 10.0.0'
   gem 'rubocop', '~> 1.63.0'
