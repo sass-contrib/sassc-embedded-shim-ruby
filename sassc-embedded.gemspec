@@ -27,7 +27,7 @@ Gem::Specification.new do |spec|
 
   spec.require_paths = ['lib', 'vendor/github.com/sass/sassc-ruby/lib']
 
-  spec.required_ruby_version = '>= 3.1.0'
+  spec.required_ruby_version = '>= 3.1'
 
   spec.add_runtime_dependency 'sass-embedded', '~> 1.76'
 end
