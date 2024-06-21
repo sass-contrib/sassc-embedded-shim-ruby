@@ -607,7 +607,10 @@ module SassC
       return if url.nil?
 
       path = unescape(parse(url).path)
-      path = path[1..] if Gem.win_platform? && path[0].chr == '/' && path[1].chr =~ /[a-z]/i && path[2].chr == ':'
+      if path.start_with?('/')
+        windows_path = path[1..]
+        path = windows_path if File.absolute_path?(windows_path)
+      end
       path
     end
 
