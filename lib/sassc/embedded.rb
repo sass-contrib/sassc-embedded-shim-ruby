@@ -109,7 +109,11 @@ module SassC
     end
 
     def source_map_file_url
-      @source_map_file_url ||= (URL.path_to_file_url(File.absolute_path(source_map_file)) if source_map_file)
+      @source_map_file_url ||= if source_map_file
+                                 components = source_map_file.split('?', 2)
+                                 components[0] = URL.path_to_file_url(File.absolute_path(components[0]))
+                                 components.join('?')
+                               end
     end
 
     def output_style
@@ -573,10 +577,6 @@ module SassC
   private_constant :Protocol
 
   module URL
-    PARSER = URI::Parser.new({ RESERVED: ';/?:@&=+$,' })
-
-    private_constant :PARSER
-
     module_function
 
     def join(...)
@@ -584,15 +584,19 @@ module SassC
     end
 
     def parse(str)
-      PARSER.parse(str)
+      URI.parse(str)
     end
 
     def escape(str)
-      PARSER.escape(str)
+      str.b.gsub(/[^0-9A-Za-z\-._~]/n) do |match|
+        format('%%%02X', match.unpack1('C'))
+      end.force_encoding(str.encoding)
     end
 
     def unescape(str)
-      PARSER.unescape(str)
+      str.gsub(/%[0-9A-Fa-f]{2}/) do |match|
+        [match[1, 2]].pack('H2')
+      end
     end
 
     def file_urls_to_relative_url(url, from_url)
@@ -618,7 +622,12 @@ module SassC
       return if path.nil?
 
       path = "/#{path}" unless path.start_with?('/')
-      "file://#{escape(path)}"
+
+      escaped = path.b.gsub(%r{[^0-9A-Za-z\-._~!$&'()*+,;=:@/]}n) do |match|
+        format('%%%02X', match.unpack1('C'))
+      end.force_encoding(path.encoding)
+
+      "file://#{escaped}"
     end
   end
 
