@@ -108,6 +108,9 @@ module SassC
 
     def source_map_file_url
       @source_map_file_url ||= if source_map_file
+                                 # https://github.com/sass-contrib/sassc-embedded-shim-ruby/pull/69
+                                 # SassC does not encode path as uri for sourceMappingURL, which is technically wrong.
+                                 # However, this behavior has been abused to append query string to sourceMappingURL.
                                  components = source_map_file.split('?', 2)
                                  components[0] = URI.path_to_file_url(File.absolute_path(components[0]))
                                  components.join('?')
@@ -397,7 +400,7 @@ module SassC
       def imports_to_native(imports, parent_dir, from_import, url, containing_url)
         return import_to_native(imports.first, parent_dir, from_import, true) if imports.one?
 
-        canonical_url = "#{containing_url}?#{URI.encode_uri_query_component(url)}"
+        canonical_url = "#{containing_url}?url=#{URI.encode_uri_query_component(url)}&from_import=#{from_import}"
         @importer_results[canonical_url] = {
           contents: imports.flat_map do |import|
             at_rule = from_import ? '@import' : '@forward'
