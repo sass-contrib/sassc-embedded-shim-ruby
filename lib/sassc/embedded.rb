@@ -61,9 +61,7 @@ module SassC
       line = e.span&.start&.line
       line += 1 unless line.nil?
       url = e.span&.url
-      path = if url&.start_with?(Protocol::FILE)
-               URI.file_urls_to_relative_path(url, URI.path_to_file_url("#{Dir.pwd}/"))
-             end
+      path = (URI.file_urls_to_relative_path(url, URI.path_to_file_url("#{Dir.pwd}/")) if url&.start_with?('file:'))
       raise SyntaxError.new(e.full_message, filename: path, line:)
     end
 
@@ -71,7 +69,7 @@ module SassC
       raise NotRenderedError unless @loaded_urls
 
       Dependency.from_filenames(@loaded_urls.filter_map do |url|
-        URI.file_url_to_path(url) if url.start_with?(Protocol::FILE) && url != file_url
+        URI.file_url_to_path(url) if url.start_with?('file:') && !url.include?('?') && url != file_url
       end)
     end
 
@@ -82,7 +80,7 @@ module SassC
       data = JSON.parse(@source_map)
       data['file'] = URI.file_urls_to_relative_url(output_url, url) if output_url
       data['sources'].map! do |source|
-        if source.start_with?(Protocol::FILE)
+        if source.start_with?('file:')
           URI.file_urls_to_relative_url(source, url)
         else
           source
@@ -312,15 +310,9 @@ module SassC
       end
 
       def canonicalize(url, context)
-        return if context.containing_url.nil?
+        return unless context.containing_url&.start_with?('file:')
 
-        containing_url = if context.containing_url.start_with?(Protocol::GLOB)
-                           URI.decode_uri_component(URI.parse(context.containing_url).fragment)
-                         else
-                           context.containing_url
-                         end
-
-        return unless containing_url.start_with?(Protocol::FILE)
+        containing_url = context.containing_url.split('?', 2).first
 
         path = URI.decode_uri_component(url)
         parent_path = URI.file_url_to_path(containing_url)
@@ -399,13 +391,13 @@ module SassC
           return resolve_file_url(import.path, parent_dir, from_import)
         end
 
-        URI.encode_uri_component(import.path)
+        URI.encode_uri_path_component(import.path)
       end
 
       def imports_to_native(imports, parent_dir, from_import, url, containing_url)
         return import_to_native(imports.first, parent_dir, from_import, true) if imports.one?
 
-        canonical_url = "#{Protocol::GLOB}?#{URI.encode_uri_component(url)}##{URI.encode_uri_component(containing_url)}"
+        canonical_url = "#{containing_url}?#{URI.encode_uri_query_component(url)}"
         @importer_results[canonical_url] = {
           contents: imports.flat_map do |import|
             at_rule = from_import ? '@import' : '@forward'
@@ -569,13 +561,6 @@ module SassC
     end
   end
 
-  module Protocol
-    FILE = 'file:'
-    GLOB = 'sassc-embedded-glob:'
-  end
-
-  private_constant :Protocol
-
   module URI
     module_function
 
@@ -587,8 +572,14 @@ module SassC
       ::URI.parse(str)
     end
 
-    def encode_path(str)
+    def encode_uri_path_component(str)
       str.b.gsub(%r{[^0-9A-Za-z\-._~!$&'()*+,;=:@/]}n) do |match|
+        format('%%%02X', match.unpack1('C'))
+      end.force_encoding(str.encoding)
+    end
+
+    def encode_uri_query_component(str)
+      str.b.gsub(%r{[^0-9A-Za-z\-._~!$&'()*+,;=:@/?]}n) do |match|
         format('%%%02X', match.unpack1('C'))
       end.force_encoding(str.encoding)
     end
@@ -629,7 +620,7 @@ module SassC
 
       path = "/#{path}" unless path.start_with?('/')
 
-      "file://#{encode_path(path)}"
+      "file://#{encode_uri_path_component(path)}"
     end
   end
 
