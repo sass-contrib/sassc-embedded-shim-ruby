@@ -46,11 +46,11 @@ module SassC
       css = result.css
       css += "\n" unless css.empty?
       unless @source_map.nil? || omit_source_map_url?
-        url = URL.parse(output_url || file_url)
+        url = URI.parse(output_url || file_url)
         source_mapping_url = if source_map_embed?
                                "data:application/json;base64,#{[@source_map].pack('m0')}"
                              else
-                               URL.file_urls_to_relative_url(source_map_file_url, url)
+                               URI.file_urls_to_relative_url(source_map_file_url, url)
                              end
         css += "\n/*# sourceMappingURL=#{source_mapping_url} */"
       end
@@ -62,7 +62,7 @@ module SassC
       line += 1 unless line.nil?
       url = e.span&.url
       path = if url&.start_with?(Protocol::FILE)
-               URL.file_urls_to_relative_path(url, URL.path_to_file_url("#{Dir.pwd}/"))
+               URI.file_urls_to_relative_path(url, URI.path_to_file_url("#{Dir.pwd}/"))
              end
       raise SyntaxError.new(e.full_message, filename: path, line:)
     end
@@ -71,19 +71,19 @@ module SassC
       raise NotRenderedError unless @loaded_urls
 
       Dependency.from_filenames(@loaded_urls.filter_map do |url|
-        URL.file_url_to_path(url) if url.start_with?(Protocol::FILE) && url != file_url
+        URI.file_url_to_path(url) if url.start_with?(Protocol::FILE) && url != file_url
       end)
     end
 
     def source_map
       raise NotRenderedError unless @source_map
 
-      url = URL.parse(source_map_file_url || file_url)
+      url = URI.parse(source_map_file_url || file_url)
       data = JSON.parse(@source_map)
-      data['file'] = URL.file_urls_to_relative_url(output_url, url) if output_url
+      data['file'] = URI.file_urls_to_relative_url(output_url, url) if output_url
       data['sources'].map! do |source|
         if source.start_with?(Protocol::FILE)
-          URL.file_urls_to_relative_url(source, url)
+          URI.file_urls_to_relative_url(source, url)
         else
           source
         end
@@ -95,7 +95,7 @@ module SassC
     private
 
     def file_url
-      @file_url ||= URL.path_to_file_url(File.absolute_path(filename || 'stdin'))
+      @file_url ||= URI.path_to_file_url(File.absolute_path(filename || 'stdin'))
     end
 
     def output_path
@@ -105,13 +105,13 @@ module SassC
     end
 
     def output_url
-      @output_url ||= (URL.path_to_file_url(File.absolute_path(output_path)) if output_path)
+      @output_url ||= (URI.path_to_file_url(File.absolute_path(output_path)) if output_path)
     end
 
     def source_map_file_url
       @source_map_file_url ||= if source_map_file
                                  components = source_map_file.split('?', 2)
-                                 components[0] = URL.path_to_file_url(File.absolute_path(components[0]))
+                                 components[0] = URI.path_to_file_url(File.absolute_path(components[0]))
                                  components.join('?')
                                end
     end
@@ -315,15 +315,15 @@ module SassC
         return if context.containing_url.nil?
 
         containing_url = if context.containing_url.start_with?(Protocol::GLOB)
-                           URL.unescape(URL.parse(context.containing_url).fragment)
+                           URI.decode_uri_component(URI.parse(context.containing_url).fragment)
                          else
                            context.containing_url
                          end
 
         return unless containing_url.start_with?(Protocol::FILE)
 
-        path = URL.unescape(url)
-        parent_path = URL.file_url_to_path(containing_url)
+        path = URI.decode_uri_component(url)
+        parent_path = URI.file_url_to_path(containing_url)
         parent_dir = File.dirname(parent_path)
 
         if containing_url == context.containing_url
@@ -338,7 +338,7 @@ module SassC
             nil
           end
         else
-          canonical_url = URL.path_to_file_url(File.absolute_path(path, parent_dir))
+          canonical_url = URI.path_to_file_url(File.absolute_path(path, parent_dir))
           if @importer_results.key?(canonical_url)
             canonical_url
           else
@@ -364,7 +364,7 @@ module SassC
 
       def resolve_file_url(path, parent_dir, from_import)
         resolved = FileSystemImporter.resolve_path(File.absolute_path(path, parent_dir), from_import)
-        URL.path_to_file_url(resolved) unless resolved.nil?
+        URI.path_to_file_url(resolved) unless resolved.nil?
       end
 
       def syntax(path)
@@ -380,7 +380,7 @@ module SassC
 
       def import_to_native(import, parent_dir, from_import, canonicalize)
         if import.source
-          canonical_url = URL.path_to_file_url(File.absolute_path(import.path, parent_dir))
+          canonical_url = URI.path_to_file_url(File.absolute_path(import.path, parent_dir))
           @importer_results[canonical_url] = if import.source.is_a?(Hash)
                                                {
                                                  contents: import.source[:contents],
@@ -399,13 +399,13 @@ module SassC
           return resolve_file_url(import.path, parent_dir, from_import)
         end
 
-        URL.escape(import.path)
+        URI.encode_uri_component(import.path)
       end
 
       def imports_to_native(imports, parent_dir, from_import, url, containing_url)
         return import_to_native(imports.first, parent_dir, from_import, true) if imports.one?
 
-        canonical_url = "#{Protocol::GLOB}?#{URL.escape(url)}##{URL.escape(containing_url)}"
+        canonical_url = "#{Protocol::GLOB}?#{URI.encode_uri_component(url)}##{URI.encode_uri_component(containing_url)}"
         @importer_results[canonical_url] = {
           contents: imports.flat_map do |import|
             at_rule = from_import ? '@import' : '@forward'
@@ -576,24 +576,30 @@ module SassC
 
   private_constant :Protocol
 
-  module URL
+  module URI
     module_function
 
     def join(...)
-      URI.join(...).to_s
+      ::URI.join(...).to_s
     end
 
     def parse(str)
-      URI.parse(str)
+      ::URI.parse(str)
     end
 
-    def escape(str)
+    def encode_path(str)
+      str.b.gsub(%r{[^0-9A-Za-z\-._~!$&'()*+,;=:@/]}n) do |match|
+        format('%%%02X', match.unpack1('C'))
+      end.force_encoding(str.encoding)
+    end
+
+    def encode_uri_component(str)
       str.b.gsub(/[^0-9A-Za-z\-._~]/n) do |match|
         format('%%%02X', match.unpack1('C'))
       end.force_encoding(str.encoding)
     end
 
-    def unescape(str)
+    def decode_uri_component(str)
       str.gsub(/%[0-9A-Fa-f]{2}/) do |match|
         [match[1, 2]].pack('H2')
       end
@@ -604,13 +610,13 @@ module SassC
     end
 
     def file_urls_to_relative_path(url, from_url)
-      unescape(file_urls_to_relative_url(url, from_url))
+      decode_uri_component(file_urls_to_relative_url(url, from_url))
     end
 
     def file_url_to_path(url)
       return if url.nil?
 
-      path = unescape(parse(url).path)
+      path = decode_uri_component(parse(url).path)
       if path.start_with?('/')
         windows_path = path[1..]
         path = windows_path if File.absolute_path?(windows_path)
@@ -623,13 +629,9 @@ module SassC
 
       path = "/#{path}" unless path.start_with?('/')
 
-      escaped = path.b.gsub(%r{[^0-9A-Za-z\-._~!$&'()*+,;=:@/]}n) do |match|
-        format('%%%02X', match.unpack1('C'))
-      end.force_encoding(path.encoding)
-
-      "file://#{escaped}"
+      "file://#{encode_path(path)}"
     end
   end
 
-  private_constant :URL
+  private_constant :URI
 end
