@@ -46,11 +46,11 @@ module SassC
       css = result.css
       css += "\n" unless css.empty?
       unless @source_map.nil? || omit_source_map_url?
-        url = URI.parse(output_url || file_url)
+        url = Uri.parse(output_url || file_url)
         source_mapping_url = if source_map_embed?
                                "data:application/json;base64,#{[@source_map].pack('m0')}"
                              else
-                               URI.file_urls_to_relative_url(source_map_file_url, url)
+                               Uri.file_urls_to_relative_url(source_map_file_url, url)
                              end
         css += "\n/*# sourceMappingURL=#{source_mapping_url} */"
       end
@@ -61,7 +61,7 @@ module SassC
       line = e.span&.start&.line
       line += 1 unless line.nil?
       url = e.span&.url
-      path = (URI.file_urls_to_relative_path(url, URI.path_to_file_url("#{Dir.pwd}/")) if url&.start_with?('file:'))
+      path = (Uri.file_urls_to_relative_path(url, Uri.path_to_file_url("#{Dir.pwd}/")) if url&.start_with?('file:'))
       raise SyntaxError.new(e.full_message, filename: path, line:)
     end
 
@@ -69,19 +69,19 @@ module SassC
       raise NotRenderedError unless @loaded_urls
 
       Dependency.from_filenames(@loaded_urls.filter_map do |url|
-        URI.file_url_to_path(url) if url.start_with?('file:') && !url.include?('?') && url != file_url
+        Uri.file_url_to_path(url) if url.start_with?('file:') && !url.include?('?') && url != file_url
       end)
     end
 
     def source_map
       raise NotRenderedError unless @source_map
 
-      url = URI.parse(source_map_file_url || file_url)
+      url = Uri.parse(source_map_file_url || file_url)
       data = JSON.parse(@source_map)
-      data['file'] = URI.file_urls_to_relative_url(output_url, url) if output_url
+      data['file'] = Uri.file_urls_to_relative_url(output_url, url) if output_url
       data['sources'].map! do |source|
         if source.start_with?('file:')
-          URI.file_urls_to_relative_url(source, url)
+          Uri.file_urls_to_relative_url(source, url)
         else
           source
         end
@@ -93,7 +93,7 @@ module SassC
     private
 
     def file_url
-      @file_url ||= URI.path_to_file_url(File.absolute_path(filename || 'stdin'))
+      @file_url ||= Uri.path_to_file_url(File.absolute_path(filename || 'stdin'))
     end
 
     def output_path
@@ -103,7 +103,7 @@ module SassC
     end
 
     def output_url
-      @output_url ||= (URI.path_to_file_url(File.absolute_path(output_path)) if output_path)
+      @output_url ||= (Uri.path_to_file_url(File.absolute_path(output_path)) if output_path)
     end
 
     def source_map_file_url
@@ -112,7 +112,7 @@ module SassC
                                  # SassC does not encode path as uri for sourceMappingURL, which is technically wrong.
                                  # However, this behavior has been abused to append query string to sourceMappingURL.
                                  components = source_map_file.split('?', 2)
-                                 components[0] = URI.path_to_file_url(File.absolute_path(components[0]))
+                                 components[0] = Uri.path_to_file_url(File.absolute_path(components[0]))
                                  components.join('?')
                                end
     end
@@ -317,12 +317,12 @@ module SassC
 
         containing_url = context.containing_url
 
-        path = URI.decode_uri_component(url)
-        parent_path = URI.file_url_to_path(containing_url)
+        path = Uri.decode_uri_component(url)
+        parent_path = Uri.file_url_to_path(containing_url)
         parent_dir = File.dirname(parent_path)
 
         if containing_url.include?('?')
-          canonical_url = URI.path_to_file_url(File.absolute_path(path, parent_dir))
+          canonical_url = Uri.path_to_file_url(File.absolute_path(path, parent_dir))
           if @importer_results.key?(canonical_url)
             canonical_url
           else
@@ -359,7 +359,7 @@ module SassC
 
       def resolve_file_url(path, parent_dir, from_import)
         resolved = FileSystemImporter.resolve_path(File.absolute_path(path, parent_dir), from_import)
-        URI.path_to_file_url(resolved) unless resolved.nil?
+        Uri.path_to_file_url(resolved) unless resolved.nil?
       end
 
       def syntax(path)
@@ -375,7 +375,7 @@ module SassC
 
       def import_to_native(import, parent_dir, from_import, canonicalize)
         if import.source
-          canonical_url = URI.path_to_file_url(File.absolute_path(import.path, parent_dir))
+          canonical_url = Uri.path_to_file_url(File.absolute_path(import.path, parent_dir))
           @importer_results[canonical_url] = if import.source.is_a?(Hash)
                                                {
                                                  contents: import.source[:contents],
@@ -394,13 +394,13 @@ module SassC
           return resolve_file_url(import.path, parent_dir, from_import)
         end
 
-        URI.encode_uri_path_component(import.path)
+        Uri.encode_uri_path_component(import.path)
       end
 
       def imports_to_native(imports, parent_dir, from_import, url, containing_url)
         return import_to_native(imports.first, parent_dir, from_import, true) if imports.one?
 
-        canonical_url = "#{containing_url}?url=#{URI.encode_uri_query_component(url)}&from_import=#{from_import}"
+        canonical_url = "#{containing_url}?url=#{Uri.encode_uri_query_component(url)}&from_import=#{from_import}"
         @importer_results[canonical_url] = {
           contents: imports.flat_map do |import|
             at_rule = from_import ? '@import' : '@forward'
@@ -564,15 +564,11 @@ module SassC
     end
   end
 
-  module URI
+  module Uri
     module_function
 
-    def join(...)
-      ::URI.join(...).to_s
-    end
-
-    def parse(str)
-      ::URI.parse(str)
+    def parse(...)
+      ::URI.parse(...)
     end
 
     def encode_uri_path_component(str)
@@ -623,5 +619,5 @@ module SassC
     end
   end
 
-  private_constant :URI
+  private_constant :Uri
 end
