@@ -605,8 +605,6 @@ module SassC
     end
 
     def file_url_to_path(url)
-      return if url.nil?
-
       path = decode_uri_component(parse(url).path)
       if path.start_with?('/')
         windows_path = path[1..]
@@ -616,8 +614,6 @@ module SassC
     end
 
     def path_to_file_url(path)
-      return if path.nil?
-
       path = "/#{path}" unless path.start_with?('/')
 
       "file://#{encode_uri_path_component(path)}"
