@@ -315,29 +315,29 @@ module SassC
       def canonicalize(url, context)
         return unless context.containing_url&.start_with?('file:')
 
-        containing_url = context.containing_url.split('?', 2).first
+        containing_url = context.containing_url
 
         path = URI.decode_uri_component(url)
         parent_path = URI.file_url_to_path(containing_url)
         parent_dir = File.dirname(parent_path)
 
-        if containing_url == context.containing_url
-          imports = @importer.imports(path, parent_path)
-          imports = [SassC::Importer::Import.new(path)] if imports.nil?
-          imports = [imports] unless imports.is_a?(Array)
-          canonical_url = imports_to_native(imports, parent_dir, context.from_import, url, context.containing_url)
-          if @importer_results.key?(canonical_url)
-            canonical_url
-          else
-            @file_url = canonical_url
-            nil
-          end
-        else
+        if containing_url.include?('?')
           canonical_url = URI.path_to_file_url(File.absolute_path(path, parent_dir))
           if @importer_results.key?(canonical_url)
             canonical_url
           else
             @file_url = resolve_file_url(path, parent_dir, context.from_import)
+            nil
+          end
+        else
+          imports = @importer.imports(path, parent_path)
+          imports = [SassC::Importer::Import.new(path)] if imports.nil?
+          imports = [imports] unless imports.is_a?(Array)
+          canonical_url = imports_to_native(imports, parent_dir, context.from_import, url, containing_url)
+          if @importer_results.key?(canonical_url)
+            canonical_url
+          else
+            @file_url = canonical_url
             nil
           end
         end
