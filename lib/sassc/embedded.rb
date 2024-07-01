@@ -46,11 +46,10 @@ module SassC
       css = result.css
       css += "\n" unless css.empty?
       unless @source_map.nil? || omit_source_map_url?
-        url = Uri.parse(output_url || file_url)
         source_mapping_url = if source_map_embed?
                                "data:application/json;base64,#{[@source_map].pack('m0')}"
                              else
-                               Uri.file_urls_to_relative_url(source_map_file_url, url)
+                               Uri.file_urls_to_relative_url(source_map_file_url, file_url)
                              end
         css += "\n/*# sourceMappingURL=#{source_mapping_url} */"
       end
@@ -78,7 +77,6 @@ module SassC
 
       url = Uri.parse(source_map_file_url || file_url)
       data = JSON.parse(@source_map)
-      data['file'] = Uri.file_urls_to_relative_url(output_url, url) if output_url
       data['sources'].map! do |source|
         if source.start_with?('file:')
           Uri.file_urls_to_relative_url(source, url)
@@ -94,16 +92,6 @@ module SassC
 
     def file_url
       @file_url ||= Uri.path_to_file_url(File.absolute_path(filename || 'stdin'))
-    end
-
-    def output_path
-      @output_path ||= @options.fetch(:output_path) do
-        "#{filename.delete_suffix(File.extname(filename))}.css" if filename
-      end
-    end
-
-    def output_url
-      @output_url ||= (Uri.path_to_file_url(File.absolute_path(output_path)) if output_path)
     end
 
     def source_map_file_url
