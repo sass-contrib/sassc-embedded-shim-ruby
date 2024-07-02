@@ -96,12 +96,8 @@ module SassC
 
     def source_map_file_url
       @source_map_file_url ||= if source_map_file
-                                 # https://github.com/sass-contrib/sassc-embedded-shim-ruby/pull/69
-                                 # SassC does not encode path as uri for sourceMappingURL, which is technically wrong.
-                                 # However, this behavior has been abused to append query string to sourceMappingURL.
-                                 components = source_map_file.split('?', 2)
-                                 components[0] = Uri.path_to_file_url(File.absolute_path(components[0]))
-                                 components.join('?')
+                                 Uri.path_to_file_url(File.absolute_path(source_map_file))
+                                    .gsub('%3F', '?') # https://github.com/sass-contrib/sassc-embedded-shim-ruby/pull/69
                                end
     end
 
