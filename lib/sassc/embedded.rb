@@ -552,32 +552,45 @@ module SassC
     module_function
 
     def parse(...)
-      ::URI.parse(...)
+      ::URI::RFC3986_PARSER.parse(...)
     end
 
-    def encode_uri_path_component(str)
-      str.b.gsub(%r{[^0-9A-Za-z\-._~!$&'()*+,;=:@/]}n) do |match|
-        format('%%%02X', match.unpack1('C'))
-      end.force_encoding(str.encoding)
-    end
-
-    def encode_uri_query_component(str)
-      str.b.gsub(%r{[^0-9A-Za-z\-._~!$&'()*+,;=:@/?]}n) do |match|
-        format('%%%02X', match.unpack1('C'))
-      end.force_encoding(str.encoding)
-    end
-
-    def encode_uri_component(str)
-      str.b.gsub(/[^0-9A-Za-z\-._~]/n) do |match|
-        format('%%%02X', match.unpack1('C'))
-      end.force_encoding(str.encoding)
-    end
-
-    def decode_uri_component(str)
-      str.gsub(/%[0-9A-Fa-f]{2}/) do |match|
-        [match[1, 2]].pack('H2')
+    {
+      encode_uri_path_component: "!$&'()*+,;=:/@",
+      encode_uri_query_component: "!$&'()*+,;=:/?@",
+      encode_uri_component: nil,
+      encode_uri: "!$&'()*+,;=:/?#[]@"
+    }
+      .each do |symbol, extra_unescaped|
+        regexp = Regexp.new("[^0-9A-Za-z#{Regexp.escape("-._~#{extra_unescaped}")}]", Regexp::NOENCODING)
+        define_method(symbol) do |str|
+          str.b.gsub(regexp) do |match|
+            "%#{match.unpack1('H2').upcase}"
+          end.force_encoding(str.encoding)
+        end
       end
-    end
+
+    {
+      decode_uri_component: nil,
+      decode_uri: "!$&'()*+,;=:/?#[]@"
+    }
+      .each do |symbol, preserve_escaped|
+        regexp = /%[0-9A-Fa-f]{2}/o
+        if preserve_escaped.nil?
+          define_method(symbol) do |str|
+            str.gsub(regexp) do |match|
+              [match[1, 2]].pack('H2')
+            end.force_encoding(str.encoding)
+          end
+        else
+          define_method(symbol) do |str|
+            str.gsub(regexp) do |match|
+              decoded = [match[1, 2]].pack('H2')
+              preserve_escaped.include?(decoded) ? match : decoded
+            end.force_encoding(str.encoding)
+          end
+        end
+      end
 
     def file_urls_to_relative_url(url, from_url)
       parse(url).route_from(from_url).to_s
