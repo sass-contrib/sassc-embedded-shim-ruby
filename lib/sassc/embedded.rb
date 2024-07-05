@@ -10,6 +10,8 @@ require_relative 'embedded/version'
 
 module SassC
   class Engine
+    remove_method(:render) if public_method_defined?(:render, false)
+
     def render
       return @template.dup if @template.empty?
 
@@ -64,6 +66,8 @@ module SassC
       raise SyntaxError.new(e.full_message, filename: path, line:)
     end
 
+    remove_method(:dependencies) if public_method_defined?(:dependencies, false)
+
     def dependencies
       raise NotRenderedError unless @loaded_urls
 
@@ -71,6 +75,8 @@ module SassC
         Uri.file_url_to_path(url) if url.start_with?('file:') && !url.include?('?') && url != file_url
       end)
     end
+
+    remove_method(:source_map) if public_method_defined?(:source_map, false)
 
     def source_map
       raise NotRenderedError unless @source_map
@@ -101,6 +107,8 @@ module SassC
                                end
     end
 
+    remove_method(:output_style) if private_method_defined?(:output_style, false)
+
     def output_style
       @output_style ||= begin
         style = @options.fetch(:style, :sass_style_nested).to_s
@@ -123,12 +131,16 @@ module SassC
       syntax
     end
 
+    remove_method(:load_paths) if private_method_defined?(:load_paths, false)
+
     def load_paths
       @load_paths ||= (@options[:load_paths] || []) + SassC.load_paths
     end
   end
 
   class FunctionsHandler
+    remove_method(:setup) if public_method_defined?(:setup, false)
+
     def setup(_native_options, functions: Script::Functions)
       @callbacks = {}
 
@@ -161,6 +173,8 @@ module SassC
 
     private
 
+    remove_method(:arguments_from_native_list) if private_method_defined?(:arguments_from_native_list, false)
+
     def arguments_from_native_list(native_argument_list)
       native_argument_list.filter_map do |native_value|
         Script::ValueConversion.from_native(native_value, @options)
@@ -179,6 +193,8 @@ module SassC
   private_constant :NoopImporter
 
   class ImportHandler
+    remove_method(:setup) if public_method_defined?(:setup, false)
+
     def setup(_native_options)
       if @importer
         import_cache = ImportCache.new(@importer)
@@ -402,6 +418,10 @@ module SassC
   end
 
   class Sass2Scss
+    class << self
+      remove_method(:convert) if public_method_defined?(:convert, false)
+    end
+
     def self.convert(sass)
       {
         contents: sass,
@@ -413,6 +433,10 @@ module SassC
   module Script
     class Value
       class String
+        class << self
+          remove_method(:quote) if public_method_defined?(:quote, false)
+        end
+
         # Returns the quoted string representation of `contents`.
         #
         # @options opts :quote [String]
@@ -425,6 +449,8 @@ module SassC
           opts[:sass] ? contents.gsub('#', '\#') : contents
         end
 
+        remove_method(:to_s) if public_method_defined?(:to_s, false)
+
         def to_s(opts = {})
           opts = { quote: :none }.merge!(opts) if @type == :identifier
           self.class.quote(@value, opts)
@@ -433,6 +459,10 @@ module SassC
     end
 
     module ValueConversion
+      class << self
+        remove_method(:from_native) if public_method_defined?(:from_native, false)
+      end
+
       def self.from_native(value, options)
         case value
         when ::Sass::Value::Null::NULL
@@ -486,6 +516,10 @@ module SassC
         else
           raise UnsupportedValue, "Sass argument of type #{value.class.name.split('::').last} unsupported"
         end
+      end
+
+      class << self
+        remove_method(:to_native) if public_method_defined?(:to_native, false)
       end
 
       def self.to_native(value)
