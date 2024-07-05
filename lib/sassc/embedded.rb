@@ -576,16 +576,16 @@ module SassC
     }
       .each do |symbol, preserve_escaped|
         regexp = /%[0-9A-Fa-f]{2}/o
-        if preserve_escaped.nil?
+        if preserve_escaped.nil? || preserve_escaped.empty?
           define_method(symbol) do |str|
             str.gsub(regexp) do |match|
-              [match[1, 2]].pack('H2')
+              [match.reverse!].pack('h2')
             end.force_encoding(str.encoding)
           end
         else
           define_method(symbol) do |str|
             str.gsub(regexp) do |match|
-              decoded = [match[1, 2]].pack('H2')
+              decoded = [match.reverse].pack('h2')
               preserve_escaped.include?(decoded) ? match : decoded
             end.force_encoding(str.encoding)
           end
