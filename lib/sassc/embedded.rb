@@ -308,6 +308,7 @@ module SassC
       def initialize(importer)
         @importer = importer
         @importer_results = {}
+        @importer_result = nil
         @file_url = nil
       end
 
@@ -323,6 +324,7 @@ module SassC
         if containing_url.include?('?')
           canonical_url = Uri.path_to_file_url(File.absolute_path(path, parent_dir))
           if @importer_results.key?(canonical_url)
+            @importer_result = @importer_results.delete(canonical_url)
             canonical_url
           else
             @file_url = resolve_file_url(path, parent_dir, context.from_import)
@@ -334,6 +336,7 @@ module SassC
           imports = [imports] unless imports.is_a?(Array)
           canonical_url = imports_to_native(imports, parent_dir, context.from_import, url, containing_url)
           if @importer_results.key?(canonical_url)
+            @importer_result = @importer_results.delete(canonical_url)
             canonical_url
           else
             @file_url = canonical_url
@@ -342,8 +345,10 @@ module SassC
         end
       end
 
-      def load(canonical_url)
-        @importer_results.delete(canonical_url)
+      def load(_canonical_url)
+        importer_result = @importer_result
+        @importer_result = nil
+        importer_result
       end
 
       def find_file_url(_url, context)
