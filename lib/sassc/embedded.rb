@@ -588,40 +588,51 @@ module SassC
       ::URI::RFC3986_PARSER.parse(...)
     end
 
-    {
-      encode_uri_path_component: "!$&'()*+,;=:/@",
-      encode_uri_query_component: "!$&'()*+,;=:/?@",
-      encode_uri_component: nil,
-      encode_uri: "!$&'()*+,;=:/?#[]@"
-    }
-      .each do |symbol, extra_unescaped|
-        regexp = Regexp.new("[^0-9A-Za-z#{Regexp.escape("-._~#{extra_unescaped}")}]", Regexp::NOENCODING)
-        define_method(symbol) do |str|
-          str.b.gsub(regexp) do |match|
-            "%#{match.unpack1('H2').upcase}"
-          end.force_encoding(str.encoding)
-        end
-      end
+    encode_uri_hash = {}
+    decode_uri_hash = {}
+    256.times do |i|
+      c = -[i].pack('C')
+      h = c.unpack1('H')
+      l = c.unpack1('h')
+      pdd = -"%#{h}#{l}"
+      pdu = -"%#{h}#{l.upcase}"
+      pud = -"%#{h.upcase}#{l}"
+      puu = -pdd.upcase
+      encode_uri_hash[c] = puu
+      decode_uri_hash[pdd] = c
+      decode_uri_hash[pdu] = c
+      decode_uri_hash[pud] = c
+      decode_uri_hash[puu] = c
+    end.freeze
+    encode_uri_hash.freeze
+    decode_uri_hash.freeze
 
     {
-      decode_uri_component: nil,
-      decode_uri: "!$&'()*+,;=:/?#[]@"
+      uri_path_component: "!$&'()*+,;=:/@",
+      uri_query_component: "!$&'()*+,;=:/?@",
+      uri_component: nil,
+      uri: "!$&'()*+,;=:/?#[]@"
     }
-      .each do |symbol, preserve_escaped|
-        regexp = /%[0-9A-Fa-f]{2}/o
-        if preserve_escaped.nil? || preserve_escaped.empty?
-          define_method(symbol) do |str|
-            str.gsub(regexp) do |match|
-              [match.reverse!].pack('h2')
-            end.force_encoding(str.encoding)
-          end
-        else
-          define_method(symbol) do |str|
-            str.gsub(regexp) do |match|
-              decoded = [match.reverse].pack('h2')
-              preserve_escaped.include?(decoded) ? match : decoded
-            end.force_encoding(str.encoding)
-          end
+      .each do |symbol, unescaped|
+        encode_regexp = Regexp.new("[^0-9A-Za-z#{Regexp.escape("-._~#{unescaped}")}]", Regexp::NOENCODING)
+
+        define_method(:"encode_#{symbol}") do |str|
+          str.b.gsub(encode_regexp, encode_uri_hash).force_encoding(str.encoding)
+        end
+
+        next if symbol.match?(/_.+_/o)
+
+        decode_regexp = /%[0-9A-Fa-f]{2}/o
+        decode_uri_hash_with_preserve_escaped = if unescaped.nil? || unescaped.empty?
+                                                  decode_uri_hash
+                                                else
+                                                  decode_uri_hash.to_h do |key, value|
+                                                    [key, unescaped.include?(value) ? key : value]
+                                                  end.freeze
+                                                end
+
+        define_method(:"decode_#{symbol}") do |str|
+          str.gsub(decode_regexp, decode_uri_hash_with_preserve_escaped).force_encoding(str.encoding)
         end
       end
 
