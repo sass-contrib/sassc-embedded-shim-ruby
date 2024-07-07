@@ -323,26 +323,23 @@ module SassC
 
         if containing_url.include?('?')
           canonical_url = Uri.path_to_file_url(File.absolute_path(path, parent_dir))
-          if @importer_results.key?(canonical_url)
-            @importer_result = @importer_results.delete(canonical_url)
-            canonical_url
-          else
+          unless @importer_results.key?(canonical_url)
             @file_url = resolve_file_url(path, parent_dir, context.from_import)
-            nil
+            return
           end
         else
           imports = @importer.imports(path, parent_path)
           imports = [SassC::Importer::Import.new(path)] if imports.nil?
           imports = [imports] unless imports.is_a?(Array)
           canonical_url = imports_to_native(imports, parent_dir, context.from_import, url, containing_url)
-          if @importer_results.key?(canonical_url)
-            @importer_result = @importer_results.delete(canonical_url)
-            canonical_url
-          else
+          unless @importer_results.key?(canonical_url)
             @file_url = canonical_url
-            nil
+            return
           end
         end
+
+        @importer_result = @importer_results.delete(canonical_url)
+        canonical_url
       end
 
       def load(_canonical_url)
