@@ -231,7 +231,7 @@ module SassC
 
     private_constant :FileImporter
 
-    class FileSystemImporter
+    module FileSystemImporter
       class << self
         def resolve_path(path, from_import)
           ext = File.extname(path)
