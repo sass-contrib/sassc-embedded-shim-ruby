@@ -54,17 +54,38 @@ require 'sassc-embedded'
 SassC::Engine.new(sass, style: :compressed).render
 ```
 
-See [rubydoc.info/gems/sassc](https://rubydoc.info/gems/sassc) for full API documentation.
+Most of the original `sassc` options are supported with no behavior difference unless noted otherwise:
 
-## Behavioral Differences from SassC Ruby
+- `:filename`
+- `:quiet`
+- ~~`:precision`~~ - ignored
+- ~~`:line_comments`~~ - ignored
+- `:syntax`
+- `:source_map_embed`
+- `:source_map_contents`
+- `:omit_source_map_url`
+- `:source_map_file`
+- `:importer`
+- `:functions`
+- `:style` - ~~`:nested`~~ and ~~`:compact`~~ behave as `:expanded`
+- `:load_paths`
 
-1. Option `:style => :nested` and `:style => :compact` behave as `:style => :expanded`.
+See [`sassc-ruby` source code](https://github.com/sass/sassc-ruby/blob/master/lib/sassc/engine.rb) and [`libsass` documentation](https://github.com/sass/libsass/blob/master/docs/api-context.md) for details.
 
-2. Option `:precision` is ignored.
+Additional `sass-embedded` options are supported:
 
-3. Option `:line_comments` is ignored.
+- `:charset`
+- `:importers`
+- `:alert_ascii`
+- `:alert_color`
+- `:fatal_deprecations`
+- `:future_deprecations`
+- `:logger`
+- `:quiet_deps`
+- `:silence_deprecations`
+- `:verbose`
 
-See [the dart-sass documentation](https://github.com/sass/dart-sass#behavioral-differences-from-ruby-sass) for other differences.
+See [`sass-embedded` documentation](https://rubydoc.info/gems/sass-embedded/Sass#compile_string-class_method) for details.
 
 ## Troubleshooting
 
