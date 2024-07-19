@@ -328,9 +328,7 @@ module SassC
             return
           end
         else
-          imports = @importer.imports(path, parent_path)
-          imports = [SassC::Importer::Import.new(path)] if imports.nil?
-          imports = [imports] unless imports.is_a?(Array)
+          imports = [*@importer.imports(path, parent_path)]
           canonical_url = imports_to_native(imports, parent_dir, context.from_import, url, containing_url)
           unless @importer_results.key?(canonical_url)
             @file_url = canonical_url
