@@ -34,7 +34,7 @@ module SassC
         alert_color: @options.fetch(:alert_color, nil),
         fatal_deprecations: @options.fetch(:fatal_deprecations, []),
         future_deprecations: @options.fetch(:future_deprecations, []),
-        logger: @options.fetch(:logger, nil),
+        logger: quiet? ? ::Sass::Logger.silent : @options.fetch(:logger, nil),
         quiet_deps: @options.fetch(:quiet_deps, false),
         silence_deprecations: @options.fetch(:silence_deprecations, []),
         verbose: @options.fetch(:verbose, false)
@@ -42,8 +42,6 @@ module SassC
 
       @loaded_urls = result.loaded_urls
       @source_map = result.source_map
-
-      return if quiet?
 
       css = result.css
       css += "\n" unless css.empty?
