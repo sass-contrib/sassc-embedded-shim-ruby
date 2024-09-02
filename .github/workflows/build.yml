@@ -62,7 +62,8 @@ jobs:
         submodule:
           - vendor/github.com/rails/sprockets
           - vendor/github.com/sass/sassc-rails
-          - vendor/github.com/twbs/bootstrap-rubygem
+          # https://github.com/twbs/bootstrap-rubygem/pull/287
+          # - vendor/github.com/twbs/bootstrap-rubygem
         exclude:
           - os: windows-latest
             ruby-version: jruby
