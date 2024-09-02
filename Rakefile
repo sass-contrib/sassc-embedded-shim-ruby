@@ -74,10 +74,6 @@ namespace :git do
               test/gemfiles/rails_7_0_dartsass.gemfile
             ]
             gemfiles.each do |gemfile|
-              # https://github.com/twbs/bootstrap-rubygem/pull/287
-              mkdir_p(File.absolute_path('test/dummy_rails/public', submodule))
-              touch(File.absolute_path('test/dummy_rails/public/favicon.ico', submodule))
-
               env = { 'BUNDLE_GEMFILE' => gemfile }
               sh(env, *%w[bundle install], chdir: submodule)
               sh(env, *%w[bundle exec rake], chdir: submodule)
