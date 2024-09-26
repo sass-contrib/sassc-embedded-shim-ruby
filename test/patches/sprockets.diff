@@ -52,7 +52,7 @@ index 7182195d..2b65656a 100644
 +  margin: math.div($margin, 2)
    border-color: $blue
 diff --git a/test/shared_sass_tests.rb b/test/shared_sass_tests.rb
-index 1cfb8413..39e1c4ce 100644
+index 1cfb8413..97e2db79 100644
 --- a/test/shared_sass_tests.rb
 +++ b/test/shared_sass_tests.rb
 @@ -26,7 +26,8 @@ div {
@@ -70,7 +70,7 @@ index 1cfb8413..39e1c4ce 100644
  .content-navigation {
    border-color: #3bbfce;
 -  color: #2ca2af; }
-+  color: #2ca2af;
++  color: rgb(43.82, 161.8657142857, 175.28);
 +}
  
  .border {
@@ -156,7 +156,7 @@ index 1cfb8413..39e1c4ce 100644
  .content-navigation {
    border-color: #3bbfce;
 -  color: #2ca2af; }
-+  color: #2ca2af;
++  color: rgb(43.82, 161.8657142857, 175.28);
 +}
  
  .border {
