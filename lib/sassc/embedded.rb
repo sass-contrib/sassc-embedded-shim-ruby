@@ -472,7 +472,8 @@ module SassC
           ::SassC::Script::Value::Bool.new(value.to_bool)
         when ::Sass::Value::Color
           if COLOR4
-            if value.space == 'hsl' || value.space == 'hwb'
+            case value.space
+            when 'hsl', 'hwb'
               value = value.to_space('hsl')
               ::SassC::Script::Value::Color.new(
                 hue: value.channel('hue'),
