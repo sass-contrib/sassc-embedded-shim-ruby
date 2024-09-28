@@ -456,10 +456,6 @@ module SassC
     end
 
     module ValueConversion
-      COLOR4 = Sass::Value::Color.method_defined?(:space)
-
-      private_constant :COLOR4
-
       class << self
         remove_method(:from_native) if public_method_defined?(:from_native, false)
       end
@@ -471,37 +467,21 @@ module SassC
         when ::Sass::Value::Boolean
           ::SassC::Script::Value::Bool.new(value.to_bool)
         when ::Sass::Value::Color
-          if COLOR4
-            case value.space
-            when 'hsl', 'hwb'
-              value = value.to_space('hsl')
-              ::SassC::Script::Value::Color.new(
-                hue: value.channel('hue'),
-                saturation: value.channel('saturation'),
-                lightness: value.channel('lightness'),
-                alpha: value.alpha
-              )
-            else
-              value = value.to_space('rgb')
-              ::SassC::Script::Value::Color.new(
-                red: value.channel('red'),
-                green: value.channel('green'),
-                blue: value.channel('blue'),
-                alpha: value.alpha
-              )
-            end
-          elsif value.instance_eval { defined? @hue }
+          case value.space
+          when 'hsl', 'hwb'
+            value = value.to_space('hsl')
             ::SassC::Script::Value::Color.new(
-              hue: value.hue,
-              saturation: value.saturation,
-              lightness: value.lightness,
+              hue: value.channel('hue'),
+              saturation: value.channel('saturation'),
+              lightness: value.channel('lightness'),
               alpha: value.alpha
             )
           else
+            value = value.to_space('rgb')
             ::SassC::Script::Value::Color.new(
-              red: value.red,
-              green: value.green,
-              blue: value.blue,
+              red: value.channel('red'),
+              green: value.channel('green'),
+              blue: value.channel('blue'),
               alpha: value.alpha
             )
           end
@@ -551,19 +531,19 @@ module SassC
         when ::SassC::Script::Value::Color
           if value.rgba?
             ::Sass::Value::Color.new(
-              **(COLOR4 ? { space: 'rgb' } : {}),
               red: value.red,
               green: value.green,
               blue: value.blue,
-              alpha: value.alpha
+              alpha: value.alpha,
+              space: 'rgb'
             )
           elsif value.hlsa?
             ::Sass::Value::Color.new(
-              **(COLOR4 ? { space: 'hsl' } : {}),
               hue: value.hue,
               saturation: value.saturation,
               lightness: value.lightness,
-              alpha: value.alpha
+              alpha: value.alpha,
+              space: 'hsl'
             )
           else
             raise UnsupportedValue, "Sass color mode #{value.instance_eval { @mode }} unsupported"
