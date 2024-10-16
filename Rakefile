@@ -11,7 +11,10 @@ Rake::TestTask.new do |t|
   t.test_files = FileList['test/**/*_test.rb']
 end
 
-RuboCop::RakeTask.new
+RuboCop::RakeTask.new do |task|
+  task.formatters = ['progress']
+  task.formatters << 'github' if ENV.key?('GITHUB_ACTIONS')
+end
 
 namespace :git do
   namespace :submodule do
