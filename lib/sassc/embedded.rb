@@ -139,8 +139,6 @@ module SassC
     remove_method(:setup) if public_method_defined?(:setup, false)
 
     def setup(_native_options, functions: Script::Functions)
-      @callbacks = {}
-
       functions_wrapper = Class.new do
         attr_accessor :options
 
@@ -148,7 +146,7 @@ module SassC
       end.new
       functions_wrapper.options = @options
 
-      Script.custom_functions(functions:).each do |custom_function|
+      Script.custom_functions(functions:).each_with_object({}) do |custom_function, callbacks|
         callback = lambda do |native_argument_list|
           function_arguments = arguments_from_native_list(native_argument_list)
           begin
@@ -162,10 +160,8 @@ module SassC
           raise e
         end
 
-        @callbacks[Script.formatted_function_name(custom_function, functions:)] = callback
+        callbacks[Script.formatted_function_name(custom_function, functions:)] = callback
       end
-
-      @callbacks
     end
 
     private
@@ -500,7 +496,7 @@ module SassC
           )
         when ::Sass::Value::Map
           ::SassC::Script::Value::Map.new(
-            value.contents.to_a.to_h { |k, v| [from_native(k, options), from_native(v, options)] }
+            value.contents.each_with_object({}) { |(k, v), h| h[from_native(k, options)] = from_native(v, options) }
           )
         when ::Sass::Value::Number
           ::SassC::Script::Value::Number.new(
@@ -563,7 +559,7 @@ module SassC
           )
         when ::SassC::Script::Value::Map
           ::Sass::Value::Map.new(
-            value.value.to_a.to_h { |k, v| [to_native(k), to_native(v)] }
+            value.value.each_with_object({}) { |(k, v), h| h[to_native(k)] = to_native(v) }
           )
         when ::SassC::Script::Value::Number
           ::Sass::Value::Number.new(
@@ -629,8 +625,8 @@ module SassC
         decode_uri_hash_with_preserve_escaped = if unescaped.nil? || unescaped.empty?
                                                   decode_uri_hash
                                                 else
-                                                  decode_uri_hash.to_h do |key, value|
-                                                    [key, unescaped.include?(value) ? key : value]
+                                                  decode_uri_hash.each_with_object({}) do |(key, value), hash|
+                                                    hash[key] = unescaped.include?(value) ? key : value
                                                   end.freeze
                                                 end
 
