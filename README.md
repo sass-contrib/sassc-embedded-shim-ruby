@@ -21,7 +21,7 @@ This library shims [`sassc`](https://github.com/sass/sassc-ruby) with the [`sass
   - [`sassc-rails`](https://github.com/sass/sassc-rails)
   - [`sprockets`](https://github.com/rails/sprockets)
   - [`sprockets-rails`](https://github.com/rails/sprockets-rails)
-- [`sassc`](https://github.com/sass/sassc-ruby) [is deprecated](https://sass-lang.com/blog/libsass-is-deprecated/).
+- [`sassc`](https://github.com/sass/sassc-ruby) [has reached end-of-life](https://github.com/sass/sassc-ruby/blob/HEAD/README.md#sassc-has-reached-end-of-life).
 - [`sass`](https://github.com/sass/ruby-sass) [has reached end-of-life](https://sass-lang.com/blog/ruby-sass-is-unsupported/).
 
 ## Install
