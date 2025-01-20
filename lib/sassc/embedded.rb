@@ -13,7 +13,10 @@ module SassC
     remove_method(:render) if public_method_defined?(:render, false)
 
     def render
-      return @template.dup if @template.empty?
+      if @template.empty?
+        @loaded_urls = []
+        return @template.dup 
+      end
 
       result = ::Sass.compile_string(
         @template,
