@@ -13,8 +13,6 @@ module SassC
     remove_method(:render) if public_method_defined?(:render, false)
 
     def render
-      return @template.dup if @template.empty?
-
       result = ::Sass.compile_string(
         @template,
         importer: (NoopImporter unless @options[:importer].nil?),
@@ -53,7 +51,7 @@ module SassC
                              end
         css += "\n/*# sourceMappingURL=#{source_mapping_url} */"
       end
-      css
+      css.encode(@template.encoding)
     rescue ::Sass::CompileError => e
       @loaded_urls = e.loaded_urls
 
