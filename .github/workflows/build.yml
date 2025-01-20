@@ -68,6 +68,8 @@ jobs:
             ruby-version: jruby
           - os: windows-latest
             submodule: vendor/github.com/rails/sprockets
+          - os: ubuntu-latest
+            submodule: vendor/github.com/twbs/bootstrap-rubygem
           - os: windows-latest
             submodule: vendor/github.com/twbs/bootstrap-rubygem
           - ruby-version: jruby
