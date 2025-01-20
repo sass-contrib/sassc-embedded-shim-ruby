@@ -1,59 +1,55 @@
 diff --git a/test/gemfiles/rails_6_0.gemfile b/test/gemfiles/rails_6_0.gemfile
-index daeffa5..834213c 100644
+index daeffa5..44e38be 100644
 --- a/test/gemfiles/rails_6_0.gemfile
 +++ b/test/gemfiles/rails_6_0.gemfile
-@@ -5,3 +5,10 @@ gem 'activesupport', '~> 6.0.3'
+@@ -5,3 +5,9 @@ gem 'activesupport', '~> 6.0.3'
  gem 'sassc-rails', '~> 2.0'
  
  gemspec path: '../../'
 +
 +gem 'base64'
 +gem 'drb'
-+gem 'logger'
 +gem 'mutex_m'
 +gem 'sassc', github: 'sass/sassc-ruby', ref: 'refs/pull/233/head'
 +gem 'sassc-embedded', path: '../../../../../..'
 diff --git a/test/gemfiles/rails_6_1.gemfile b/test/gemfiles/rails_6_1.gemfile
-index 04342fb..b3854fc 100644
+index 04342fb..e59f402 100644
 --- a/test/gemfiles/rails_6_1.gemfile
 +++ b/test/gemfiles/rails_6_1.gemfile
-@@ -5,3 +5,10 @@ gem 'activesupport', '~> 6.1.3'
+@@ -5,3 +5,9 @@ gem 'activesupport', '~> 6.1.3'
  gem 'sassc-rails', '~> 2.0'
  
  gemspec path: '../../'
 +
 +gem 'base64'
 +gem 'drb'
-+gem 'logger'
 +gem 'mutex_m'
 +gem 'sassc', github: 'sass/sassc-ruby', ref: 'refs/pull/233/head'
 +gem 'sassc-embedded', path: '../../../../../..'
 diff --git a/test/gemfiles/rails_7_0_dartsass.gemfile b/test/gemfiles/rails_7_0_dartsass.gemfile
-index 6df9142..07fb349 100644
+index 6df9142..759ab8d 100644
 --- a/test/gemfiles/rails_7_0_dartsass.gemfile
 +++ b/test/gemfiles/rails_7_0_dartsass.gemfile
-@@ -5,3 +5,9 @@ gem 'activesupport', '~> 7.0.4'
+@@ -5,3 +5,8 @@ gem 'activesupport', '~> 7.0.4'
  gem 'dartsass-sprockets', '~> 3.0'
  
  gemspec path: '../../'
 +
 +gem 'base64'
 +gem 'drb'
-+gem 'logger'
 +gem 'mutex_m'
 +gem 'sassc-embedded', path: '../../../../../..'
 diff --git a/test/gemfiles/rails_7_0_sassc.gemfile b/test/gemfiles/rails_7_0_sassc.gemfile
-index 58fc039..4b5a393 100644
+index 58fc039..aa8c54b 100644
 --- a/test/gemfiles/rails_7_0_sassc.gemfile
 +++ b/test/gemfiles/rails_7_0_sassc.gemfile
-@@ -5,3 +5,10 @@ gem 'activesupport', '~> 7.0.4'
+@@ -5,3 +5,9 @@ gem 'activesupport', '~> 7.0.4'
  gem 'sassc-rails', '~> 2.0'
  
  gemspec path: '../../'
 +
 +gem 'base64'
 +gem 'drb'
-+gem 'logger'
 +gem 'mutex_m'
 +gem 'sassc', github: 'sass/sassc-ruby', ref: 'refs/pull/233/head'
 +gem 'sassc-embedded', path: '../../../../../..'
