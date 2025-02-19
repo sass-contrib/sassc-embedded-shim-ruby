@@ -106,18 +106,14 @@ module SassC
     remove_method(:output_style) if private_method_defined?(:output_style, false)
 
     def output_style
-      @output_style ||= begin
-        style = @options.fetch(:style, :sass_style_nested).to_s.delete_prefix('sass_style_').to_sym
-
-        case style
-        when :nested, :compact, :expanded
-          :expanded
-        when :compressed
-          :compressed
-        else
-          raise InvalidStyleError
-        end
-      end
+      @output_style ||= case @options.fetch(:style, :sass_style_nested).to_sym
+                        when :nested, :expanded, :compact, :sass_style_nested, :sass_style_expanded, :sass_style_compact
+                          :expanded
+                        when :compressed, :sass_style_compressed
+                          :compressed
+                        else
+                          raise InvalidStyleError
+                        end
     end
 
     def syntax
