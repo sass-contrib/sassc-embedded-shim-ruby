@@ -16,18 +16,19 @@ jobs:
       id-token: write
 
     steps:
-    - name: Checkout
-      uses: actions/checkout@v4
-      with:
-        submodules: true
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: true
 
-    - name: Setup ruby
-      uses: ruby/setup-ruby@v1
-      with:
-        ruby-version: ruby
+      - name: Setup ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: ruby
+          rubygems: latest
 
-    - name: Configure trusted publishing credentials
-      uses: rubygems/configure-rubygems-credentials@v1.0.0
+      - name: Configure trusted publishing credentials
+        uses: rubygems/configure-rubygems-credentials@v1.0.0
 
-    - name: Release
-      run: rake -f -r bundler/gem_tasks release
+      - name: Release
+        run: rake -f -r bundler/gem_tasks release
