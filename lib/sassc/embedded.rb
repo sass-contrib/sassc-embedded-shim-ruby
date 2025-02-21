@@ -87,7 +87,7 @@ module SassC
         end
       end
 
-      JSON.generate(data)
+      JSON.fast_generate(data)
     end
 
     private
