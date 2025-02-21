@@ -167,6 +167,12 @@ module SassC
         Script::ValueConversion.from_native(native_value, @options)
       end
     end
+
+    remove_method(:to_native_value) if private_method_defined?(:to_native_value, false)
+
+    def to_native_value(sass_value)
+      Script::ValueConversion.to_native(sass_value)
+    end
   end
 
   module NoopImporter
