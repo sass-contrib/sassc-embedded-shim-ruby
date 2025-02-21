@@ -117,8 +117,8 @@ module SassC
     end
 
     def syntax
-      syntax = @options.fetch(:syntax, :scss)
-      syntax = :indented if syntax.to_sym == :sass
+      syntax = @options.fetch(:syntax, :scss).to_sym
+      syntax = :indented if syntax == :sass
       syntax
     end
 
