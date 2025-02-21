@@ -41,17 +41,17 @@ module SassC
       @loaded_urls = result.loaded_urls
       @source_map = result.source_map
 
-      css = result.css
-      css += "\n" unless css.empty?
+      css = result.css.encode(@template.encoding)
+      css << "\n" unless css.empty?
       unless @source_map.nil? || omit_source_map_url?
         source_mapping_url = if source_map_embed?
                                "data:application/json;base64,#{[@source_map].pack('m0')}"
                              else
                                Uri.file_urls_to_relative_url(source_map_file_url, file_url)
                              end
-        css += "\n/*# sourceMappingURL=#{source_mapping_url} */"
+        css << "\n/*# sourceMappingURL=#{source_mapping_url} */"
       end
-      css.encode(@template.encoding)
+      css
     rescue ::Sass::CompileError => e
       @loaded_urls = e.loaded_urls
 
