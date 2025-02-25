@@ -282,15 +282,16 @@ index 1cfb8413..97e2db79 100644
    end
  end
 diff --git a/test/test_sassc.rb b/test/test_sassc.rb
-index 0d8f2f32..18ef2964 100644
+index 0d8f2f32..03ad99e3 100644
 --- a/test/test_sassc.rb
 +++ b/test/test_sassc.rb
-@@ -82,6 +82,8 @@ class TestSprocketsSassc < TestBaseSassc
+@@ -88,8 +88,7 @@ class TestSprocketsSassc < TestBaseSassc
+     rescue SassC::SyntaxError => error
+       # this is not exactly consistent with ruby sass
+       assert error.message.include?("invalid")
+-      assert error.message.include?("error.sass")
+-      assert error.message.include?("line 5")
++      assert error.message.include?("error.sass 5")
+     end
    end
  
-   test "raise sass error with line number" do
-+    skip
-+
-     begin
-       render('sass/error.sass')
-       flunk
