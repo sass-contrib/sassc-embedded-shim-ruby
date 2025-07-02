@@ -176,3 +176,16 @@ index a15110d..452a251 100644
      CSS
    end
  
+diff --git a/test/test_helper.rb b/test/test_helper.rb
+index 8b38c02..d44166e 100644
+--- a/test/test_helper.rb
++++ b/test/test_helper.rb
+@@ -5,6 +5,8 @@ ENV["RAILS_ENV"] = "test"
+ $LOAD_PATH.unshift(File.join(File.dirname(__FILE__), '..', 'lib'))
+ $LOAD_PATH.unshift(File.dirname(__FILE__))
+ 
++require 'logger'
++
+ require "pry"
+ require "fileutils"
+ require 'rails'

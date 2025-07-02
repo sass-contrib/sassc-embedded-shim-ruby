@@ -1,3 +1,16 @@
+diff --git a/Rakefile b/Rakefile
+index 52402cc..b874105 100644
+--- a/Rakefile
++++ b/Rakefile
+@@ -7,7 +7,7 @@ $:.unshift(lib_path) unless $:.include?(lib_path)
+ require 'rake/testtask'
+ Rake::TestTask.new do |t|
+   t.libs << 'test'
+-  t.test_files = FileList['test/**/*_test.rb']
++  t.test_files = FileList['test/**/*_test.rb'].exclude('**/vendor/bundle/**/*')
+   t.verbose = false
+   t.warning = false
+ end
 diff --git a/test/gemfiles/rails_6_0.gemfile b/test/gemfiles/rails_6_0.gemfile
 index daeffa5..44e38be 100644
 --- a/test/gemfiles/rails_6_0.gemfile
@@ -54,10 +67,16 @@ index 58fc039..aa8c54b 100644
 +gem 'sassc', github: 'sass/sassc-ruby', ref: 'refs/pull/233/head'
 +gem 'sassc-embedded', path: '../../../../../..'
 diff --git a/test/test_helper.rb b/test/test_helper.rb
-index da89690..dd535dc 100644
+index da89690..0a88fcd 100644
 --- a/test/test_helper.rb
 +++ b/test/test_helper.rb
-@@ -34,9 +34,9 @@ end
+@@ -1,3 +1,5 @@
++require 'logger'
++
+ require 'minitest/autorun'
+ require 'minitest/reporters'
+ Minitest::Reporters.use! Minitest::Reporters::SpecReporter.new
+@@ -34,9 +36,9 @@ end
  
  Capybara.configure do |config|
    config.server = :webrick
