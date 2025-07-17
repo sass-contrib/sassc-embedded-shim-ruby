@@ -258,13 +258,13 @@ module SassC
         def try_path(path)
           partial = File.join(File.dirname(path), "_#{File.basename(path)}")
           result = []
-          result.push(partial) if file_exist?(partial)
-          result.push(path) if file_exist?(path)
+          result.push(partial) if File.file?(partial)
+          result.push(path) if File.file?(path)
           result
         end
 
         def try_path_as_dir(path, from_import)
-          return unless dir_exist?(path)
+          return unless File.directory?(path)
 
           if from_import
             result = exactly_one(try_path_with_ext(File.join(path, 'index.import')))
@@ -279,14 +279,6 @@ module SassC
           return paths.first if paths.one?
 
           raise "It's not clear which file to import. Found:\n#{paths.map { |path| "  #{path}" }.join("\n")}"
-        end
-
-        def file_exist?(path)
-          File.exist?(path) && File.file?(path)
-        end
-
-        def dir_exist?(path)
-          File.exist?(path) && File.directory?(path)
         end
 
         def without_ext(path)
