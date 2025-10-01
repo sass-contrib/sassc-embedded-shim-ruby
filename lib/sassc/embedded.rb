@@ -594,7 +594,7 @@ module SassC
       decode_uri_hash[pdu] = c
       decode_uri_hash[pud] = c
       decode_uri_hash[puu] = c
-    end.freeze
+    end
     encode_uri_hash.freeze
     decode_uri_hash.freeze
 
