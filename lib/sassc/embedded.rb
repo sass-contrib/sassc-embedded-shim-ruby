@@ -387,7 +387,7 @@ module SassC
 
         canonical_url = "#{containing_url}?url=#{Uri.encode_uri_query_component(url)}&from_import=#{from_import}"
         @importer_results[canonical_url] = {
-          contents: imports.flat_map do |import|
+          contents: imports.map do |import|
             at_rule = from_import ? '@import' : '@forward'
             url = import_to_native(import, parent_dir, from_import, false)
             "#{at_rule} #{Script::Value::String.quote(url)};"
