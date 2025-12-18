@@ -4,7 +4,7 @@ require 'sassc-embedded'
 
 require 'fileutils'
 require 'minitest/autorun'
-require 'minitest/around/unit'
+require 'minitest/hooks/test'
 
 module FixtureHelper
   FIXTURE_ROOT = File.expand_path(File.join(File.dirname(__FILE__), 'fixtures'))
@@ -23,11 +23,13 @@ module FixtureHelper
 end
 
 module TempFileTest
+  include Minitest::Hooks
+
   def around
     pwd = Dir.pwd
     tmpdir = Dir.mktmpdir
     Dir.chdir tmpdir
-    yield
+    super
   ensure
     Dir.chdir pwd
     FileUtils.rm_rf(tmpdir)
