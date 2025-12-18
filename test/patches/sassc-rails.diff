@@ -146,9 +146,18 @@ similarity index 100%
 rename from test/dummy/app/assets/stylesheets/partials/_explicit_extension_import.foo
 rename to test/dummy/app/assets/stylesheets/partials/_explicit_extension_import.foo.scss
 diff --git a/test/sassc_rails_test.rb b/test/sassc_rails_test.rb
-index a15110d..452a251 100644
+index a15110d..aef4142 100644
 --- a/test/sassc_rails_test.rb
 +++ b/test/sassc_rails_test.rb
+@@ -2,7 +2,7 @@
+ 
+ require "test_helper"
+ 
+-class SassRailsTest < MiniTest::Test
++class SassRailsTest < Minitest::Test
+   attr_reader :app
+ 
+   def setup
 @@ -164,6 +164,8 @@ class SassRailsTest < MiniTest::Test
    end
  
