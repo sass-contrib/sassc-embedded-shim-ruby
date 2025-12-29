@@ -68,8 +68,6 @@ jobs:
             ruby-version: jruby
           - os: windows-latest
             submodule: vendor/github.com/rails/sprockets
-          - os: ubuntu-latest
-            submodule: vendor/github.com/twbs/bootstrap-rubygem
           - os: windows-latest
             submodule: vendor/github.com/twbs/bootstrap-rubygem
           - ruby-version: jruby
@@ -86,6 +84,11 @@ jobs:
       with:
         ruby-version: ${{ matrix.ruby-version }}
         bundler-cache: true
+
+    # https://chromium.googlesource.com/chromium/src/+/main/docs/security/apparmor-userns-restrictions.md
+    - name: Disable AppArmor
+      if: runner.os == 'Linux'
+      run: sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
 
     - name: Test
       run: bundle exec rake git:submodule:test[${{matrix.submodule}}]
