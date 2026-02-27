@@ -6,6 +6,7 @@ require 'fileutils'
 require 'minitest/autorun'
 require 'minitest/hooks/test'
 
+# rubocop:disable Style/OneClassPerFile
 module FixtureHelper
   FIXTURE_ROOT = File.expand_path(File.join(File.dirname(__FILE__), 'fixtures'))
 
@@ -44,3 +45,4 @@ module TempFileTest
     FileUtils.mkdir_p(directory)
   end
 end
+# rubocop:enable Style/OneClassPerFile
