@@ -59,7 +59,7 @@ module SassC
       line += 1 unless line.nil?
       url = e.span&.url
       path = (Uri.file_urls_to_relative_path(url, Uri.path_to_file_url("#{Dir.pwd}/")) if url&.start_with?('file:'))
-      raise SyntaxError.new(e.full_message, filename: path, line:)
+      raise SyntaxError.new(e.full_message, filename: path, line:), cause: nil
     end
 
     remove_method(:dependencies) if public_method_defined?(:dependencies, false)
@@ -143,15 +143,12 @@ module SassC
       Script.custom_functions(functions:).each_with_object({}) do |custom_function, callbacks|
         callback = lambda do |native_argument_list|
           function_arguments = arguments_from_native_list(native_argument_list)
-          begin
-            result = functions_wrapper.send(custom_function, *function_arguments)
-          rescue StandardError
-            raise ::Sass::ScriptError, "Error: error in C function #{custom_function}"
-          end
+          result = functions_wrapper.send(custom_function, *function_arguments)
           to_native_value(result)
         rescue StandardError => e
-          warn "[SassC::FunctionsHandler] #{e.cause.message}"
-          raise e
+          error(e.message)
+          e.backtrace.unshift("error in C function #{custom_function}")
+          raise
         end
 
         callbacks[Script.formatted_function_name(custom_function, functions:)] = callback
@@ -172,6 +169,12 @@ module SassC
 
     def to_native_value(sass_value)
       Script::ValueConversion.to_native(sass_value)
+    end
+
+    remove_method(:error) if private_method_defined?(:error, false)
+
+    def error(message)
+      warn "[SassC::FunctionsHandler] #{message}"
     end
   end
 
