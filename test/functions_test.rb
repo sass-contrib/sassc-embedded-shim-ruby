@@ -127,7 +127,7 @@ module SassC
         engine.render
       end
 
-      assert_match(/Error: error in C function function_that_raises_errors/, exception.message)
+      assert_match(/in ['`](?:SassC::Script::Functions#)?function_that_raises_errors'/, exception.full_message)
       assert_match(/Intentional wrong thing happened somewhere inside the custom function/, exception.message)
       assert_match(/\[SassC::FunctionsHandler\] Intentional wrong thing happened somewhere inside the custom function/,
                    stderr_output)

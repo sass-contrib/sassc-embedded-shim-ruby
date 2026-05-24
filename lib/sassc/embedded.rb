@@ -59,7 +59,7 @@ module SassC
       line += 1 unless line.nil?
       url = e.span&.url
       path = (Uri.file_urls_to_relative_path(url, Uri.path_to_file_url("#{Dir.pwd}/")) if url&.start_with?('file:'))
-      raise SyntaxError.new(e.full_message, filename: path, line:), cause: nil
+      raise SyntaxError.new(e.message, filename: path, line:)
     end
 
     remove_method(:dependencies) if public_method_defined?(:dependencies, false)
@@ -147,7 +147,6 @@ module SassC
           to_native_value(result)
         rescue StandardError => e
           error(e.message)
-          e.backtrace.unshift("error in C function #{custom_function}")
           raise
         end
 
@@ -572,6 +571,20 @@ module SassC
           raise UnsupportedValue, "Sass return type #{value.class.name.split('::').last} unsupported"
         end
       end
+    end
+  end
+
+  class SyntaxError
+    def detailed_message(...)
+      return super unless cause.is_a?(::Sass::CompileError)
+
+      cause.detailed_message(...).gsub(cause.class.name, self.class.name)
+    end
+
+    def full_message(...)
+      return super unless cause.is_a?(::Sass::CompileError)
+
+      cause.full_message(...).gsub(cause.class.name, self.class.name)
     end
   end
 
