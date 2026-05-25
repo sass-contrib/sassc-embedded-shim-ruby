@@ -47,7 +47,7 @@ module SassC
         source_mapping_url = if source_map_embed?
                                "data:application/json;base64,#{[@source_map].pack('m0')}"
                              else
-                               Uri.file_urls_to_relative_url(source_map_file_url, file_url)
+                               Uri.decode_uri_component(Uri.relative(source_map_file_url, file_url))
                              end
         css << "\n/*# sourceMappingURL=#{source_mapping_url} */"
       end
@@ -58,8 +58,8 @@ module SassC
       line = e.span&.start&.line
       line += 1 unless line.nil?
       url = e.span&.url
-      path = (Uri.file_urls_to_relative_path(url, Uri.path_to_file_url("#{Dir.pwd}/")) if url&.start_with?('file:'))
-      raise SyntaxError.new(e.message, filename: path, line:)
+      filename = (Uri.decode_uri_component(Uri.relative(url, Uri.pwd)) if url&.start_with?('file:'))
+      raise SyntaxError.new(e.message, filename:, line:)
     end
 
     remove_method(:dependencies) if public_method_defined?(:dependencies, false)
@@ -68,7 +68,7 @@ module SassC
       raise NotRenderedError unless @loaded_urls
 
       Dependency.from_filenames(@loaded_urls.filter_map do |url|
-        Uri.file_url_to_path(url) if url.start_with?('file:') && !url.include?('?') && url != file_url
+        Uri.file_uri_to_path(url) if url.start_with?('file:') && !url.include?('?') && url != file_url
       end)
     end
 
@@ -77,11 +77,11 @@ module SassC
     def source_map
       raise NotRenderedError unless @source_map
 
-      url = Uri.parse(source_map_file_url || file_url)
+      url = source_map_file_url || file_url
       data = JSON.parse(@source_map)
       data['sources'].map! do |source|
         if source.start_with?('file:')
-          Uri.file_urls_to_relative_url(source, url)
+          Uri.relative(source, url)
         else
           source
         end
@@ -93,12 +93,12 @@ module SassC
     private
 
     def file_url
-      @file_url ||= Uri.path_to_file_url(File.absolute_path(filename || 'stdin'))
+      @file_url ||= Uri.path_to_file_uri(File.absolute_path(filename || 'stdin'))
     end
 
     def source_map_file_url
       @source_map_file_url ||= if source_map_file
-                                 Uri.path_to_file_url(File.absolute_path(source_map_file))
+                                 Uri.path_to_file_uri(File.absolute_path(source_map_file))
                                     .gsub('%3F', '?') # https://github.com/sass-contrib/sassc-embedded-shim-ruby/pull/69
                                end
     end
@@ -306,11 +306,11 @@ module SassC
         containing_url = context.containing_url
 
         path = Uri.decode_uri_component(url)
-        parent_path = Uri.file_url_to_path(containing_url)
+        parent_path = Uri.file_uri_to_path(containing_url)
         parent_dir = File.dirname(parent_path)
 
         if containing_url.include?('?')
-          canonical_url = Uri.path_to_file_url(File.absolute_path(path, parent_dir))
+          canonical_url = Uri.path_to_file_uri(File.absolute_path(path, parent_dir))
           unless @importer_results.key?(canonical_url)
             @file_url = resolve_file_url(path, parent_dir, context.from_import)
             return
@@ -346,7 +346,7 @@ module SassC
 
       def resolve_file_url(path, parent_dir, from_import)
         resolved = FileSystemImporter.resolve_path(File.absolute_path(path, parent_dir), from_import)
-        Uri.path_to_file_url(resolved) unless resolved.nil?
+        Uri.path_to_file_uri(resolved) unless resolved.nil?
       end
 
       def syntax(path)
@@ -362,7 +362,7 @@ module SassC
 
       def import_to_native(import, parent_dir, from_import, canonicalize)
         if import.source
-          canonical_url = Uri.path_to_file_url(File.absolute_path(import.path, parent_dir))
+          canonical_url = Uri.path_to_file_uri(File.absolute_path(import.path, parent_dir))
           @importer_results[canonical_url] = if import.source.is_a?(Hash)
                                                {
                                                  contents: import.source[:contents],
@@ -591,68 +591,26 @@ module SassC
   module Uri
     module_function
 
-    def parse(...)
-      ::URI::RFC3986_PARSER.parse(...)
+    def decode_uri_component(str)
+      str.b.gsub(/%\h\h/, ::URI::TBLDECWWWCOMP_).force_encoding(str.encoding)
     end
 
-    encode_uri_hash = {}
-    decode_uri_hash = {}
-    256.times do |i|
-      c = -[i].pack('C')
-      h = c.unpack1('H')
-      l = c.unpack1('h')
-      pdd = -"%#{h}#{l}"
-      pdu = -"%#{h}#{l.upcase}"
-      pud = -"%#{h.upcase}#{l}"
-      puu = -pdd.upcase
-      encode_uri_hash[c] = puu
-      decode_uri_hash[pdd] = c
-      decode_uri_hash[pdu] = c
-      decode_uri_hash[pud] = c
-      decode_uri_hash[puu] = c
-    end
-    encode_uri_hash.freeze
-    decode_uri_hash.freeze
-
-    {
-      uri_path_component: "!$&'()*+,;=:/@",
-      uri_query_component: "!$&'()*+,;=:/?@",
-      uri_component: nil,
-      uri: "!$&'()*+,;=:/?#[]@"
-    }
-      .each do |symbol, unescaped|
-        encode_regexp = Regexp.new("[^0-9A-Za-z#{Regexp.escape("-._~#{unescaped}")}]", Regexp::NOENCODING)
-
-        define_method(:"encode_#{symbol}") do |str|
-          str.b.gsub(encode_regexp, encode_uri_hash).force_encoding(str.encoding)
-        end
-
-        next if symbol.match?(/_.+_/o)
-
-        decode_regexp = /%[0-9A-Fa-f]{2}/o
-        decode_uri_hash_with_preserve_escaped = if unescaped.nil? || unescaped.empty?
-                                                  decode_uri_hash
-                                                else
-                                                  decode_uri_hash.each_with_object({}) do |(key, value), hash|
-                                                    hash[key] = unescaped.include?(value) ? key : value
-                                                  end.freeze
-                                                end
-
-        define_method(:"decode_#{symbol}") do |str|
-          str.gsub(decode_regexp, decode_uri_hash_with_preserve_escaped).force_encoding(str.encoding)
-        end
-      end
-
-    def file_urls_to_relative_url(url, from_url)
-      parse(url).route_from(from_url).to_s
+    def encode_uri_component(str)
+      str.b.gsub(/[^0-9A-Za-z\-._~]/n, ::URI::TBLENCURICOMP_).force_encoding(str.encoding)
     end
 
-    def file_urls_to_relative_path(url, from_url)
-      decode_uri_component(file_urls_to_relative_url(url, from_url))
+    def encode_uri_path_component(str)
+      str.b.gsub(%r{[^0-9A-Za-z\-._~!$&'()*+,;=:@/]}n, ::URI::TBLENCURICOMP_).force_encoding(str.encoding)
     end
 
-    def file_url_to_path(url)
-      path = decode_uri_component(parse(url).path)
+    def encode_uri_query_component(str)
+      str.b.gsub(%r{[^0-9A-Za-z\-._~!$&'()*+,;=:@/?]}n, ::URI::TBLENCURICOMP_).force_encoding(str.encoding)
+    end
+
+    alias encode_uri_fragment_component encode_uri_query_component
+
+    def file_uri_to_path(uri)
+      path = decode_uri_component(::URI::RFC3986_PARSER.parse(uri).path)
       if path.start_with?('/')
         windows_path = path[1..]
         path = windows_path if File.absolute_path?(windows_path)
@@ -660,10 +618,19 @@ module SassC
       path
     end
 
-    def path_to_file_url(path)
+    def path_to_file_uri(path)
       path = "/#{path}" unless path.start_with?('/')
-
       "file://#{encode_uri_path_component(path)}"
+    end
+
+    def pwd
+      pwd = Dir.pwd
+      pwd += '/' unless pwd.end_with?('/')
+      path_to_file_uri(pwd)
+    end
+
+    def relative(to, from)
+      ::URI::RFC3986_PARSER.parse(to).route_from(from).to_s
     end
   end
 
