@@ -1,10 +1,11 @@
 diff --git a/Gemfile b/Gemfile
-index 3be9c3cd..df08f6a7 100644
+index 7785ccfb..ee84d06b 100644
 --- a/Gemfile
 +++ b/Gemfile
-@@ -1,2 +1,5 @@
- source "https://rubygems.org"
+@@ -2,3 +2,6 @@ source "https://rubygems.org"
  gemspec
+ 
+ gem "rack", "!= 3.2.6" if RUBY_VERSION < "2.6"
 +
 +gem 'sassc', github: 'sass/sassc-ruby', ref: 'refs/pull/233/head'
 +gem 'sassc-embedded', path: '../../../..'
