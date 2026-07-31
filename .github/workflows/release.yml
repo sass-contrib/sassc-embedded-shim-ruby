@@ -35,6 +35,6 @@ jobs:
         run: rake -f -r bundler/gem_tasks release
 
       - name: Attest
-        uses: actions/attest@v4
+        uses: actions/attest@v4.2.0
         with:
           subject-path: pkg/*.gem
