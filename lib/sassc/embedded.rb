@@ -160,6 +160,8 @@ module SassC
 
     def arguments_from_native_list(native_argument_list)
       native_argument_list.filter_map do |native_value|
+        next if native_value.to_nil.nil?
+
         Script::ValueConversion.from_native(native_value, @options)
       end
     end
@@ -418,35 +420,209 @@ module SassC
   end
 
   module Script
-    class Value
-      class Color
-        def hsla?
-          @mode == :hsla
+    remove_const(:Value) if const_defined?(:Value)
+
+    module Value
+      def to_h
+        assert_map.contents
+      end
+
+      def to_s(_options = nil)
+        s = nil
+        Sass.compile_string('$_: o(#{i()});', functions: { # rubocop:disable Lint/InterpolationCheck
+                              'i()' => ->(_) { self },
+                              'o($s)' => ->(args) { s = args[0] }
+                            })
+        s.assert_string.text
+      rescue ::Sass::CompileError => e
+        raise ::Sass::ScriptError.new(e.message), cause: nil
+      end
+
+      def null?
+        false
+      end
+
+      module Bool
+        include Value
+
+        TRUE = ::Sass::Value::Boolean::TRUE.dup
+        Bool::TRUE.extend(Bool)
+
+        FALSE = ::Sass::Value::Boolean::FALSE.dup
+        Bool::FALSE.extend(Bool)
+
+        class << self
+          def new(value)
+            value ? Bool::TRUE : Bool::FALSE
+          end
+        end
+
+        def to_s(_options = {})
+          value.to_s
         end
       end
 
-      class String
+      module Color
+        include Value
+
+        def red
+          rgba? ? channel('red') : nil
+        end
+
+        def green
+          rgba? ? channel('green') : nil
+        end
+
+        def blue
+          rgba? ? channel('blue') : nil
+        end
+
+        def hue
+          hsla? ? channel('hue') : nil
+        end
+
+        def saturation
+          hsla? ? channel('saturation') : nil
+        end
+
+        def lightness
+          hsla? ? channel('lightness') : nil
+        end
+
         class << self
-          remove_method(:quote) if public_method_defined?(:quote, false)
+          def new(...)
+            ::Sass::Value::Color.new(...)
+                                .extend(::SassC::Script::Value::Color)
+          end
         end
 
-        # Returns the quoted string representation of `contents`.
-        #
-        # @options opts :quote [String]
-        #   The preferred quote style for quoted strings. If `:none`, strings are
-        #   always emitted unquoted. If `nil`, quoting is determined automatically.
-        # @options opts :sass [String]
-        #   Whether to quote strings for Sass source, as opposed to CSS. Defaults to `false`.
-        def self.quote(contents, opts = {})
-          contents = ::Sass::Value::String.new(contents, quoted: opts[:quote] != :none).to_s
-          opts[:sass] ? contents.gsub('#', '\#') : contents
+        def rgba?
+          space == 'rgb'
         end
 
-        remove_method(:to_s) if public_method_defined?(:to_s, false)
+        def hsla?
+          space == 'hsl'
+        end
 
-        def to_s(opts = {})
-          opts = { quote: :none }.merge!(opts) if @type == :identifier
-          self.class.quote(@value, opts)
+        def value
+          [*channels, alpha]
+        end
+      end
+
+      module List
+        include Value
+
+        def value
+          contents
+        end
+
+        class << self
+          def new(value, separator: nil, bracketed: false)
+            separator = case separator
+                        when :comma
+                          ','
+                        when :space
+                          ' '
+                        when :slash
+                          '/'
+                        when :undecided
+                          nil
+                        else
+                          separator
+                        end
+            ::Sass::Value::List.new(value, separator:, bracketed:)
+                               .extend(::SassC::Script::Value::List)
+          end
+        end
+      end
+
+      module Map
+        include Value
+
+        def value
+          contents
+        end
+
+        class << self
+          def new(value)
+            ::Sass::Value::Map.new(value)
+                              .extend(::SassC::Script::Value::Map)
+          end
+        end
+      end
+
+      module Null
+        include Value
+
+        NULL = ::Sass::Value::Null::NULL.dup.extend(Null)
+
+        class << self
+          def new
+            NULL
+          end
+        end
+
+        def null?
+          true
+        end
+
+        def to_s(_options = nil)
+          ''
+        end
+      end
+
+      module Number
+        include Value
+
+        class << self
+          def new(value, numerator_units = nil, denominator_units = nil)
+            ::Sass::Value::Number.new(value,
+                                      { numerator_units: Array(numerator_units),
+                                        denominator_units: Array(denominator_units) })
+                                 .extend(::SassC::Script::Value::Number)
+          end
+        end
+      end
+
+      module String
+        include Value
+
+        def value
+          text
+        end
+
+        def type
+          quoted? ? :string : :identifier
+        end
+
+        class << self
+          def quote(contents, options = {})
+            contents = ::Sass::Value::String.new(contents, quoted: options[:quote] != :none).to_s
+            options[:sass] ? contents.gsub('#', '\#') : contents
+          end
+
+          def new(value, type = :identifier)
+            ::Sass::Value::String.new(value, quoted: type != :identifier)
+                                 .extend(::SassC::Script::Value::String)
+          end
+        end
+
+        def +(other)
+          other_value = if other.is_a?(::SassC::Script::Value)
+                          other.to_s(quote: :none)
+                        else
+                          other.to_s
+                        end
+          String.new(value + other_value, type)
+        end
+
+        def to_s(options = {})
+          options = { quote: :none }.merge!(options) unless quoted?
+          String.quote(text, options)
+        end
+
+        def to_sass(options = {})
+          to_s(options.merge(sass: true))
         end
       end
     end
@@ -458,57 +634,26 @@ module SassC
 
       def self.from_native(value, options)
         case value
-        when ::Sass::Value::Null::NULL
-          nil
+        when ::Sass::Value::Null
+          SassC::Script::Value::Null::NULL
         when ::Sass::Value::Boolean
-          ::SassC::Script::Value::Bool.new(value.to_bool)
+          value.value ? ::SassC::Script::Value::Bool::TRUE : ::SassC::Script::Value::Bool::FALSE
         when ::Sass::Value::Color
-          case value.space
-          when 'hsl', 'hwb'
-            value = value.to_space('hsl')
-            ::SassC::Script::Value::Color.new(
-              hue: value.channel('hue'),
-              saturation: value.channel('saturation'),
-              lightness: value.channel('lightness'),
-              alpha: value.alpha
-            )
-          else
-            value = value.to_space('rgb')
-            ::SassC::Script::Value::Color.new(
-              red: value.channel('red'),
-              green: value.channel('green'),
-              blue: value.channel('blue'),
-              alpha: value.alpha
-            )
-          end
+          value.extend(::SassC::Script::Value::Color)
         when ::Sass::Value::List
-          ::SassC::Script::Value::List.new(
-            value.to_a.map { |element| from_native(element, options) },
-            separator: case value.separator
-                       when ','
-                         :comma
-                       when ' '
-                         :space
-                       else
-                         raise UnsupportedValue, "Sass list separator #{value.separator} unsupported"
-                       end,
-            bracketed: value.bracketed?
-          )
+          value.instance_variable_set(:@contents, value.instance_variable_get(:@contents).map do |element|
+            from_native(element, options)
+          end.freeze)
+          value.extend(::SassC::Script::Value::List)
         when ::Sass::Value::Map
-          ::SassC::Script::Value::Map.new(
-            value.contents.each_with_object({}) { |(k, v), h| h[from_native(k, options)] = from_native(v, options) }
-          )
+          value.instance_variable_set(:@contents, value.instance_variable_get(:@contents).to_h do |k, v|
+            [from_native(k, options), from_native(v, options)]
+          end.freeze)
+          value.extend(::SassC::Script::Value::Map)
         when ::Sass::Value::Number
-          ::SassC::Script::Value::Number.new(
-            value.value,
-            value.numerator_units,
-            value.denominator_units
-          )
+          value.extend(::SassC::Script::Value::Number)
         when ::Sass::Value::String
-          ::SassC::Script::Value::String.new(
-            value.text,
-            value.quoted? ? :string : :identifier
-          )
+          value.extend(::SassC::Script::Value::String)
         else
           raise UnsupportedValue, "Sass argument of type #{value.class.name.split('::').last} unsupported"
         end
@@ -520,59 +665,10 @@ module SassC
 
       def self.to_native(value)
         case value
+        when ::Sass::Value
+          value
         when nil
           ::Sass::Value::Null::NULL
-        when ::SassC::Script::Value::Bool
-          ::Sass::Value::Boolean.new(value.to_bool)
-        when ::SassC::Script::Value::Color
-          if value.rgba?
-            ::Sass::Value::Color.new(
-              red: value.red,
-              green: value.green,
-              blue: value.blue,
-              alpha: value.alpha,
-              space: 'rgb'
-            )
-          elsif value.hsla?
-            ::Sass::Value::Color.new(
-              hue: value.hue,
-              saturation: value.saturation,
-              lightness: value.lightness,
-              alpha: value.alpha,
-              space: 'hsl'
-            )
-          else
-            raise UnsupportedValue, "Sass color mode #{value.instance_eval { @mode }} unsupported"
-          end
-        when ::SassC::Script::Value::List
-          ::Sass::Value::List.new(
-            value.to_a.map { |element| to_native(element) },
-            separator: case value.separator
-                       when :comma
-                         ','
-                       when :space
-                         ' '
-                       else
-                         raise UnsupportedValue, "Sass list separator #{value.separator} unsupported"
-                       end,
-            bracketed: value.bracketed
-          )
-        when ::SassC::Script::Value::Map
-          ::Sass::Value::Map.new(
-            value.value.each_with_object({}) { |(k, v), h| h[to_native(k)] = to_native(v) }
-          )
-        when ::SassC::Script::Value::Number
-          ::Sass::Value::Number.new(
-            value.value, {
-              numerator_units: value.numerator_units,
-              denominator_units: value.denominator_units
-            }
-          )
-        when ::SassC::Script::Value::String
-          ::Sass::Value::String.new(
-            value.value,
-            quoted: value.type != :identifier
-          )
         else
           raise UnsupportedValue, "Sass return type #{value.class.name.split('::').last} unsupported"
         end
