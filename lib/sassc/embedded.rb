@@ -160,6 +160,8 @@ module SassC
 
     def arguments_from_native_list(native_argument_list)
       native_argument_list.filter_map do |native_value|
+        next if native_value.to_nil.nil?
+
         Script::ValueConversion.from_native(native_value, @options)
       end
     end
@@ -167,7 +169,7 @@ module SassC
     remove_method(:to_native_value) if private_method_defined?(:to_native_value, false)
 
     def to_native_value(sass_value)
-      Script::ValueConversion.to_native(sass_value)
+      Script::ValueConversion.to_native(sass_value.nil? ? SassC::Script::Value::Null::NULL : sass_value)
     end
 
     remove_method(:error) if private_method_defined?(:error, false)
@@ -418,35 +420,225 @@ module SassC
   end
 
   module Script
-    class Value
-      class Color
-        def hsla?
-          @mode == :hsla
+    remove_const(:Value) if const_defined?(:Value)
+
+    module Value
+      def to_s(_options = nil)
+        super()
+      end
+
+      module Bool
+        include Value
+
+        TRUE = ::Sass::Value::Boolean::TRUE.dup.extend(Bool)
+
+        FALSE = ::Sass::Value::Boolean::FALSE.dup.extend(Bool)
+
+        class << self
+          def new(value)
+            value ? Bool::TRUE : Bool::FALSE
+          end
         end
       end
 
-      class String
+      module Calculation
+        include Value
+
         class << self
-          remove_method(:quote) if public_method_defined?(:quote, false)
+          def calc(...)
+            ::Sass::Value::Calculation.calc(...)
+                                      .extend(::SassC::Script::Value::Calculation)
+          end
+
+          def min(...)
+            ::Sass::Value::Calculation.min(...)
+                                      .extend(::SassC::Script::Value::Calculation)
+          end
+
+          def max(...)
+            ::Sass::Value::Calculation.max(...)
+                                      .extend(::SassC::Script::Value::Calculation)
+          end
+
+          def clamp(...)
+            ::Sass::Value::Calculation.clamp(...)
+                                      .extend(::SassC::Script::Value::Calculation)
+          end
         end
 
-        # Returns the quoted string representation of `contents`.
-        #
-        # @options opts :quote [String]
-        #   The preferred quote style for quoted strings. If `:none`, strings are
-        #   always emitted unquoted. If `nil`, quoting is determined automatically.
-        # @options opts :sass [String]
-        #   Whether to quote strings for Sass source, as opposed to CSS. Defaults to `false`.
-        def self.quote(contents, opts = {})
-          contents = ::Sass::Value::String.new(contents, quoted: opts[:quote] != :none).to_s
-          opts[:sass] ? contents.gsub('#', '\#') : contents
+        def value
+          [name, *arguments].freeze
+        end
+      end
+
+      module Color
+        include Value
+
+        class << self
+          def new(...)
+            ::Sass::Value::Color.new(...)
+                                .extend(::SassC::Script::Value::Color)
+          end
         end
 
-        remove_method(:to_s) if public_method_defined?(:to_s, false)
+        def value
+          [*channels, alpha].freeze
+        end
 
-        def to_s(opts = {})
-          opts = { quote: :none }.merge!(opts) if @type == :identifier
-          self.class.quote(@value, opts)
+        def rgba?
+          !%w[hsl hwb].include?(space)
+        end
+
+        def hsla?
+          space == 'hsl'
+        end
+
+        def hwba?
+          space == 'hwb'
+        end
+      end
+
+      module Function
+        include Value
+
+        class << self
+          def new(...)
+            ::Sass::Value::Function.new(...)
+                                   .extend(::SassC::Script::Value::Function)
+          end
+        end
+      end
+
+      module List
+        include Value
+
+        class << self
+          def new(contents = [], separator: ',', bracketed: false)
+            ::Sass::Value::List.new(contents,
+                                    separator: case separator
+                                               when :comma
+                                                 ','
+                                               when :space
+                                                 ' '
+                                               when :slash
+                                                 '/'
+                                               when :undecided
+                                                 nil
+                                               else
+                                                 separator
+                                               end,
+                                    bracketed:)
+                               .extend(::SassC::Script::Value::List)
+          end
+        end
+
+        def value
+          contents
+        end
+      end
+
+      module ArgumentList
+        include List
+
+        class << self
+          def new(contents = [], keywords = {}, separator = ',')
+            ::Sass::Value::ArgumentListList.new(contents,
+                                                keywords,
+                                                separator: case separator
+                                                           when :comma
+                                                             ','
+                                                           when :space
+                                                             ' '
+                                                           when :slash
+                                                             '/'
+                                                           when :undecided
+                                                             nil
+                                                           else
+                                                             separator
+                                                           end)
+                                           .extend(::SassC::Script::Value::ArgumentList)
+          end
+        end
+      end
+
+      module Map
+        include Value
+
+        class << self
+          def new(value)
+            ::Sass::Value::Map.new(value)
+                              .extend(::SassC::Script::Value::Map)
+          end
+        end
+
+        def value
+          contents
+        end
+      end
+
+      module Mixin
+        include Value
+      end
+
+      module Module
+        include Value
+      end
+
+      module Null
+        include Value
+
+        NULL = ::Sass::Value::Null::NULL.dup.extend(Null)
+
+        class << self
+          def new
+            NULL
+          end
+        end
+      end
+
+      module Number
+        include Value
+
+        class << self
+          def new(value, numerator_units = nil, denominator_units = nil)
+            ::Sass::Value::Number.new(value,
+                                      { numerator_units: Array(numerator_units),
+                                        denominator_units: Array(denominator_units) })
+                                 .extend(::SassC::Script::Value::Number)
+          end
+        end
+      end
+
+      module String
+        include Value
+
+        class << self
+          def quote(contents, options = {})
+            contents = ::Sass::Value::String.new(contents, quoted: options[:quote] != :none).to_s
+            options[:sass] ? contents.gsub('#', '\#') : contents
+          end
+
+          def new(value, type = :identifier)
+            ::Sass::Value::String.new(value, quoted: type != :identifier)
+                                 .extend(::SassC::Script::Value::String)
+          end
+        end
+
+        def value
+          text
+        end
+
+        def type
+          quoted? ? :string : :identifier
+        end
+
+        def to_s(options = {})
+          options = { quote: :none }.merge!(options) unless quoted?
+          String.quote(text, options)
+        end
+
+        def to_sass(options = {})
+          to_s(options.merge(sass: true))
         end
       end
     end
@@ -458,57 +650,41 @@ module SassC
 
       def self.from_native(value, options)
         case value
-        when ::Sass::Value::Null::NULL
-          nil
-        when ::Sass::Value::Boolean
-          ::SassC::Script::Value::Bool.new(value.to_bool)
-        when ::Sass::Value::Color
-          case value.space
-          when 'hsl', 'hwb'
-            value = value.to_space('hsl')
-            ::SassC::Script::Value::Color.new(
-              hue: value.channel('hue'),
-              saturation: value.channel('saturation'),
-              lightness: value.channel('lightness'),
-              alpha: value.alpha
-            )
-          else
-            value = value.to_space('rgb')
-            ::SassC::Script::Value::Color.new(
-              red: value.channel('red'),
-              green: value.channel('green'),
-              blue: value.channel('blue'),
-              alpha: value.alpha
-            )
-          end
-        when ::Sass::Value::List
-          ::SassC::Script::Value::List.new(
-            value.to_a.map { |element| from_native(element, options) },
-            separator: case value.separator
-                       when ','
-                         :comma
-                       when ' '
-                         :space
-                       else
-                         raise UnsupportedValue, "Sass list separator #{value.separator} unsupported"
-                       end,
-            bracketed: value.bracketed?
-          )
-        when ::Sass::Value::Map
-          ::SassC::Script::Value::Map.new(
-            value.contents.each_with_object({}) { |(k, v), h| h[from_native(k, options)] = from_native(v, options) }
-          )
-        when ::Sass::Value::Number
-          ::SassC::Script::Value::Number.new(
-            value.value,
-            value.numerator_units,
-            value.denominator_units
-          )
         when ::Sass::Value::String
-          ::SassC::Script::Value::String.new(
-            value.text,
-            value.quoted? ? :string : :identifier
-          )
+          value.extend(::SassC::Script::Value::String)
+        when ::Sass::Value::Number
+          value.extend(::SassC::Script::Value::Number)
+        when ::Sass::Value::Color
+          value.extend(::SassC::Script::Value::Color)
+        when ::Sass::Value::List
+          value.instance_variable_set(:@contents, value.instance_variable_get(:@contents).map do |element|
+            from_native(element, options)
+          end.freeze)
+          if value.is_a?(::Sass::Value::ArgumentList)
+            value.instance_variable_set(:@keywords, value.instance_variable_get(:@keywords).to_h do |k, v|
+              [k, from_native(v, options)]
+            end.freeze)
+            value.extend(::SassC::Script::Value::ArgumentList)
+          else
+            value.extend(::SassC::Script::Value::List)
+          end
+        when ::Sass::Value::Map
+          value.instance_variable_set(:@contents, value.instance_variable_get(:@contents).to_h do |k, v|
+            [from_native(k, options), from_native(v, options)]
+          end.freeze)
+          value.extend(::SassC::Script::Value::Map)
+        when ::Sass::Value::Function
+          value.extend(::SassC::Script::Value::Function)
+        when ::Sass::Value::Mixin
+          value.extend(::SassC::Script::Value::Mixin)
+        when ::Sass::Value::Module
+          value.extend(::SassC::Script::Value::Module)
+        when ::Sass::Value::Calculation
+          value.extend(::SassC::Script::Value::Calculation)
+        when ::Sass::Value::Boolean
+          value.value ? ::SassC::Script::Value::Bool::TRUE : ::SassC::Script::Value::Bool::FALSE
+        when ::Sass::Value::Null
+          ::SassC::Script::Value::Null::NULL
         else
           raise UnsupportedValue, "Sass argument of type #{value.class.name.split('::').last} unsupported"
         end
@@ -520,59 +696,8 @@ module SassC
 
       def self.to_native(value)
         case value
-        when nil
-          ::Sass::Value::Null::NULL
-        when ::SassC::Script::Value::Bool
-          ::Sass::Value::Boolean.new(value.to_bool)
-        when ::SassC::Script::Value::Color
-          if value.rgba?
-            ::Sass::Value::Color.new(
-              red: value.red,
-              green: value.green,
-              blue: value.blue,
-              alpha: value.alpha,
-              space: 'rgb'
-            )
-          elsif value.hsla?
-            ::Sass::Value::Color.new(
-              hue: value.hue,
-              saturation: value.saturation,
-              lightness: value.lightness,
-              alpha: value.alpha,
-              space: 'hsl'
-            )
-          else
-            raise UnsupportedValue, "Sass color mode #{value.instance_eval { @mode }} unsupported"
-          end
-        when ::SassC::Script::Value::List
-          ::Sass::Value::List.new(
-            value.to_a.map { |element| to_native(element) },
-            separator: case value.separator
-                       when :comma
-                         ','
-                       when :space
-                         ' '
-                       else
-                         raise UnsupportedValue, "Sass list separator #{value.separator} unsupported"
-                       end,
-            bracketed: value.bracketed
-          )
-        when ::SassC::Script::Value::Map
-          ::Sass::Value::Map.new(
-            value.value.each_with_object({}) { |(k, v), h| h[to_native(k)] = to_native(v) }
-          )
-        when ::SassC::Script::Value::Number
-          ::Sass::Value::Number.new(
-            value.value, {
-              numerator_units: value.numerator_units,
-              denominator_units: value.denominator_units
-            }
-          )
-        when ::SassC::Script::Value::String
-          ::Sass::Value::String.new(
-            value.value,
-            quoted: value.type != :identifier
-          )
+        when ::Sass::Value
+          value
         else
           raise UnsupportedValue, "Sass return type #{value.class.name.split('::').last} unsupported"
         end
