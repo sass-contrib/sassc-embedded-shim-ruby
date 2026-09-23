@@ -419,6 +419,12 @@ module SassC
 
   module Script
     class Value
+      class Color
+        def hsla?
+          @mode == :hsla
+        end
+      end
+
       class String
         class << self
           remove_method(:quote) if public_method_defined?(:quote, false)
