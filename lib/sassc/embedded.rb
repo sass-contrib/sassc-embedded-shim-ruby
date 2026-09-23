@@ -527,7 +527,7 @@ module SassC
               alpha: value.alpha,
               space: 'rgb'
             )
-          elsif value.hlsa?
+          elsif value.hsla?
             ::Sass::Value::Color.new(
               hue: value.hue,
               saturation: value.saturation,
