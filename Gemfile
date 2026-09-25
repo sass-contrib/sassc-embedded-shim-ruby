@@ -7,7 +7,7 @@ gemspec
 group :development do
   gem 'minitest', '>= 5.27.0', '< 7'
   gem 'minitest-hooks', '~> 1.5.2'
-  gem 'rake', '>= 10.0.0'
+  gem 'rake', '~> 13.3'
   gem 'rubocop', '~> 1.91.0'
   gem 'rubocop-minitest', '~> 0.40.0'
   gem 'rubocop-performance', '~> 1.27.0'
