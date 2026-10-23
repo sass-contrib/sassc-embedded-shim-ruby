@@ -77,6 +77,31 @@ module SassC
       CSS
     end
 
+    def test_function_that_takes_a_sass_mixin
+      assert_sass <<-SCSS, <<-CSS
+        @use 'sass:meta';
+
+        @mixin a() {
+          a {
+            b: c;
+          }
+        }
+
+        @include meta.apply(inspect-mixin(meta.get-mixin('a')));
+      SCSS
+        a { b: c; }
+      CSS
+    end
+
+    def test_function_that_takes_a_sass_module
+      assert_sass <<-SCSS, <<-CSS
+        @use 'sass:meta';
+        a {b: meta.function-exists('function-exists', inspect-module(meta.get-module('meta')))}
+      SCSS
+        a { b: true; }
+      CSS
+    end
+
     private
 
     def assert_sass(sass, expected_css)
@@ -114,6 +139,22 @@ module SassC
       def inspect_function(argument)
         unless argument.is_a? SassC::Script::Value::Function
           raise StandardError, 'passed value is not a Sass::Script::Value::Function'
+        end
+
+        argument
+      end
+
+      def inspect_mixin(argument)
+        unless argument.is_a? SassC::Script::Value::Mixin
+          raise StandardError, 'passed value is not a Sass::Script::Value::Mixin'
+        end
+
+        argument
+      end
+
+      def inspect_module(argument)
+        unless argument.is_a? SassC::Script::Value::Module
+          raise StandardError, 'passed value is not a Sass::Script::Value::Module'
         end
 
         argument
