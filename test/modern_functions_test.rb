@@ -57,6 +57,26 @@ module SassC
       CSS
     end
 
+    def test_function_that_returns_a_sass_function
+      assert_sass <<-SCSS, <<-CSS
+        @use 'sass:meta';
+        $my-func: returns-sass-function();
+        div { width: meta.call($my-func, 2); }
+      SCSS
+        div { width: 3; }
+      CSS
+    end
+
+    def test_function_that_takes_a_sass_function
+      assert_sass <<-SCSS, <<-CSS
+        @use 'sass:meta';
+        @function plusOne($n) {@return $n + 1}
+        div { width: meta.call(inspect-function(meta.get-function('plusOne')), 2); }
+      SCSS
+        div { width: 3; }
+      CSS
+    end
+
     private
 
     def assert_sass(sass, expected_css)
@@ -91,12 +111,26 @@ module SassC
         argument
       end
 
+      def inspect_function(argument)
+        unless argument.is_a? SassC::Script::Value::Function
+          raise StandardError, 'passed value is not a Sass::Script::Value::Function'
+        end
+
+        argument
+      end
+
       def returns_sass_calculation
         SassC::Script::Value::Calculation.calc(
           SassC::Script::CalculationValue::CalculationOperation.new(
             '+', SassC::Script::Value::Number.new(10, 'px'), SassC::Script::Value::Number.new(5, '%')
           )
         )
+      end
+
+      def returns_sass_function
+        SassC::Script::Value::Function.new('plusOne($n)') do |arguments|
+          SassC::Script::Value::Number.new(arguments[0].assert_number.value + 1)
+        end
       end
     end
   end
