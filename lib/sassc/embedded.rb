@@ -420,6 +420,19 @@ module SassC
   end
 
   module Script
+    module CalculationValue
+      module CalculationOperation
+        include CalculationValue
+
+        class << self
+          def new(...)
+            ::Sass::CalculationValue::CalculationOperation.new(...)
+                                                          .extend(::SassC::Script::CalculationValue::CalculationOperation)
+          end
+        end
+      end
+    end
+
     remove_const(:Value) if const_defined?(:Value)
 
     module Value
