@@ -58,19 +58,11 @@ module SassC
       CSS
     end
 
-    def test_function_that_returns_a_rgb_color
+    def test_function_that_returns_a_color
       assert_sass <<-SCSS, <<-CSS
-        div { background: returns-a-rgb-color(); }
+        div { background: returns-a-color(); }
       SCSS
         div { background: black; }
-      CSS
-    end
-
-    def test_function_that_returns_a_hsl_color
-      assert_sass <<-SCSS, <<-CSS
-        div { background: returns-a-hsl-color(); }
-      SCSS
-        div { background: hsl(0, 0%, 0%); }
       CSS
     end
 
@@ -124,7 +116,7 @@ module SassC
       assert_sass <<-SCSS, <<-EXPECTED_CSS
         div { color: nice_color_argument(red); }
       SCSS
-        div { color: rgb(255, 0, 0); }
+        div { color: red; }
       EXPECTED_CSS
     end
 
@@ -255,12 +247,8 @@ module SassC
         SassC::Script::Value::String.new(color.to_s, :identifier)
       end
 
-      def returns_a_rgb_color
+      def returns_a_color
         SassC::Script::Value::Color.new(red: 0, green: 0, blue: 0)
-      end
-
-      def returns_a_hsl_color
-        SassC::Script::Value::Color.new(hue: 0, saturation: 0, lightness: 0)
       end
 
       def returns_a_number
