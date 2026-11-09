@@ -51,6 +51,9 @@ namespace :git do
         case submodule
         when 'vendor/github.com/rails/sprockets'
           Bundler.with_original_env do
+            # Fix jsminc build error with arch_flag instead of cflags, because
+            # jsminc has hardcoded cflags that cannot be overridden.
+            sh(*%w[bundle config build.jsminc --with-arch_flag=-Wno-error=incompatible-pointer-types], chdir: submodule)
             sh(*%w[bundle install], chdir: submodule)
             sh(*%w[bundle exec rake test TEST=test/test_sassc.rb], chdir: submodule)
           end
